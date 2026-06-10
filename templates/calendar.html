@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto" x-data="calendarApp()">
+    <div class="mb-6 flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Study Calendar</h1>
+            <p class="text-slate-500 mt-1">Assign topics to specific days.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button @click="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h2 class="text-lg font-semibold text-slate-800 w-40 text-center" x-text="monthYear"></h2>
+            <button @click="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+            <template x-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']">
+                <div class="py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider" x-text="day"></div>
+            </template>
+        </div>
+        <div class="grid grid-cols-7 auto-rows-fr">
+            <template x-for="day in calendarDays" :key="day.date">
+                <div @click="selectDate(day.date)" class="min-h-[100px] p-2 border-b border-r border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer relative"
+                     :class="{ 'bg-primary-50/50': isToday(day.date), 'border-l-4 border-l-primary-500': isToday(day.date), 'opacity-40': !day.isCurrentMonth }">
+                    <span class="text-sm font-medium" :class="isToday(day.date) ? 'text-primary-700 bg-primary-100 w-7 h-7 flex items-center justify-center rounded-full' : 'text-slate-700'" x-text="day.dayNum"></span>
+                    <div class="mt-2 space-y-1">
+                        <template x-if="day.events.topics > 0">
+                            <div class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded truncate">📚 <span x-text="day.events.topics + ' Topics'"></span></div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div x-show="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-md w-full" @click.away="showModal = false">
+            <h3 class="text-lg font-semibold text-slate-900 mb-4" x-text="'Assign Topic to ' + formatDate(selectedDate)"></h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Select a Topic</label>
+                    <select x-model="selectedTopicId" class="w-full border-slate-300 rounded-lg shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm p-2 border">
+                        <option value="">Choose a topic...</option>
+                        <template x-for="topic in available.topics" :key="topic.id">
+                            <option :value="topic.id" x-text="topic.title"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button @click="showModal = false" class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button @click="assignTopic" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">Assign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto" x-data="{ activeTab: 'all' }">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Daily Plan: {{ date }}</h1>
+            <p class="text-slate-500 mt-1">Focus on today's assigned materials.</p>
+        </div>
+        <div class="flex bg-slate-100 p-1 rounded-lg">
+            <button @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">All</button>
+            <button @click="activeTab = 'reading'" :class="activeTab === 'reading' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Reading</button>
+            <button @click="activeTab = 'mcq'" :class="activeTab === 'mcq' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">MCQs</button>
+            <button @click="activeTab = 'todos'" :class="activeTab === 'todos' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all">Todos</button>
+        </div>
+    </div>
+
+    <!-- Topics Overview -->
+    <div x-show="activeTab === 'all'" class="mb-8">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            Assigned Topics
+        </h2>
+        {% if data.topics %}
+            <div class="flex flex-wrap gap-2 mb-6">
+                {% for topic in data.topics %}
+                <span class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium border border-indigo-100">{{ topic.title }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Reading Section -->
+    <div x-show="activeTab === 'all' || activeTab === 'reading'" class="mb-8">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            Reading Material
+        </h2>
+        {% if data.reading %}
+            {% for item in data.reading %}
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 prose prose-slate max-w-none mb-4">
+                <h3 class="text-md font-semibold text-slate-900 mb-2">{{ item.title }}</h3>
+                {{ item.content | replace('\n', '<br>') | safe }}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center text-slate-500">
+                <p>No reading material assigned for this day yet. Visit the <a href="/calendar/" class="text-primary-600 hover:underline">Calendar</a> to assign content.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- MCQ Section -->
+    <div x-show="activeTab === 'all' || activeTab === 'mcq'" class="mb-8">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Practice Questions
+        </h2>
+        {% if data.mcqs %}
+            {% for item in data.mcqs %}
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
+                <h3 class="font-medium text-slate-900 mb-3">{{ item.question }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    {% for opt in item.options %}
+                    <div class="p-3 rounded-lg border border-slate-200 text-sm {% if opt.key == item.answer %}bg-emerald-50 border-emerald-200 text-emerald-800 font-medium{% else %}text-slate-600{% endif %}">
+                        <span class="font-bold mr-2">{{ opt.key }})</span> {{ opt.text }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if item.explanation %}
+                <div class="p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+                    <span class="font-semibold text-slate-800">Explanation:</span> {{ item.explanation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center text-slate-500">
+                <p>No MCQs assigned for today.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Todos Section -->
+    <div x-show="activeTab === 'all' || activeTab === 'todos'">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            Today's Tasks
+        </h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+            {% if data.todos %}
+                {% for item in data.todos %}
+                <div class="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                    <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                           {% if item.is_completed %}checked{% endif %}
+                           onchange="toggleTodo({{ item.id }}, this)">
+                    <span class="text-slate-700 flex-1 {% if item.is_completed %}line-through text-slate-400{% endif %}">{{ item.content }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="p-6 text-center text-slate-500">
+                    <p>No tasks assigned for today.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleTodo(id, checkbox) {
+    fetch(`/todos/${id}/toggle`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const span = checkbox.nextElementSibling;
+                if (checkbox.checked) span.classList.add('line-through', 'text-slate-400');
+                else span.classList.remove('line-through', 'text-slate-400');
+            }
+        });
+}
+</script>
+{% endblock %}

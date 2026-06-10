@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto h-[calc(100vh-8rem)] flex flex-col" x-data="uploadApp()">
+    <div class="mb-6 flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Upload XML Content</h1>
+            <p class="text-slate-500 mt-1">Upload structured XML to automatically categorize and parse your study material.</p>
+        </div>
+        <div class="flex gap-3">
+            <label class="cursor-pointer bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Upload .xml File
+                <input type="file" accept=".xml" class="hidden" @change="handleFileUpload($event)">
+            </label>
+            <button @click="loadSample()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                Load Sample
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
+        <!-- XML Editor -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-semibold text-slate-800 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    XML Source
+                </h3>
+                <span class="text-xs text-slate-500" x-text="xmlContent.length + ' characters'"></span>
+            </div>
+            <div class="flex-1 p-4 overflow-hidden relative">
+                <textarea 
+                    x-model="xmlContent" 
+                    @input="debouncedParse()"
+                    class="w-full h-full resize-none border-0 focus:ring-0 font-mono text-xs text-slate-700 p-2 bg-slate-50 rounded-lg" 
+                    placeholder="<document>
+  <metadata>
+    <title>Topic Title</title>
+    ...
+  </metadata>
+  ...
+</document>"></textarea>
+            </div>
+            <div class="p-4 border-t border-slate-100">
+                <button 
+                    @click="saveToDatabase()" 
+                    :disabled="isSaving || !xmlContent.trim()"
+                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <template x-if="isSaving">
+                        <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </template>
+                    <span x-text="isSaving ? 'Saving to Database...' : 'Parse & Save to Database'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-semibold text-slate-800">Live Preview</h3>
+                <div class="flex gap-2 text-[10px] font-bold uppercase tracking-wider">
+                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded" x-text="'📖 ' + preview.reading.length"></span>
+                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded" x-text="'📐 ' + preview.formulas.length"></span>
+                    <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded" x-text="'❓ ' + preview.mcqs.length"></span>
+                    <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded" x-text="'📝 ' + preview.todos.length"></span>
+                </div>
+            </div>
+            <div class="flex-1 p-4 overflow-y-auto space-y-4">
+                <template x-if="parseError">
+                    <div class="p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
+                        <strong>XML Parse Error:</strong> <span x-text="parseError"></span>
+                    </div>
+                </template>
+                
+                <template x-if="!parseError && preview.metadata.title">
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Topic</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-900" x-text="preview.metadata.title"></h4>
+                        <p class="text-sm text-slate-600 mt-1" x-text="preview.metadata.description"></p>
+                        <div class="flex gap-2 mt-3">
+                            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold" x-text="preview.metadata.category"></span>
+                            <template x-if="preview.metadata.subcategory">
+                                <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold" x-text="'→ ' + preview.metadata.subcategory"></span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Reading Preview -->
+                <template x-for="(block, idx) in preview.reading" :key="'r'+idx">
+                    <div class="p-4 bg-blue-50/50 rounded-lg border border-blue-100">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase block mb-1">📖 Reading: <span x-text="block.title"></span></span>
+                        <p class="text-sm text-slate-700 line-clamp-3" x-text="block.content"></p>
+                    </div>
+                </template>
+
+                <!-- Formula Preview -->
+                <template x-for="(f, idx) in preview.formulas" :key="'f'+idx">
+                    <div class="p-4 bg-purple-50/50 rounded-lg border border-purple-100">
+                        <span class="text-[10px] font-bold text-purple-600 uppercase block mb-1">📐 Formula: <span x-text="f.title"></span></span>
+                        <code class="text-sm text-slate-800 font-mono" x-text="f.content"></code>
+                    </div>
+                </template>
+
+                <!-- MCQ Preview (Answers Hidden) -->
+                <template x-for="(q, idx) in preview.mcqs" :key="'q'+idx">
+                    <div class="p-4 bg-amber-50/50 rounded-lg border border-amber-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-bold text-amber-600 uppercase">❓ MCQ</span>
+                            <span class="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-bold" x-text="q.difficulty.toUpperCase()"></span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-800 mb-2" x-text="q.question"></p>
+                        <div class="space-y-1">
+                            <template x-for="opt in q.options" :key="opt.key">
+                                <div class="text-xs p-2 bg-white rounded border border-slate-200 text-slate-600 flex gap-2">
+                                    <span class="font-bold" x-text="opt.key + ')'"></span>
+                                    <span x-text="opt.text"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 italic">Answer & explanation hidden until saved.</p>
+                    </div>
+                </template>
+
+                <!-- Todo Preview -->
+                <template x-for="(t, idx) in preview.todos" :key="'t'+idx">
+                    <div class="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 flex items-center gap-2">
+                        <div class="w-4 h-4 rounded border-2 border-emerald-300"></div>
+                        <span class="text-sm text-slate-700" x-text="t.content"></span>
+                    </div>
+                </template>
+
+                <template x-if="!parseError && !preview.metadata.title && xmlContent.trim()">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                        <p>Waiting for valid XML structure...</p>
+                    </div>
+                </template>
+                
+                <template x-if="!xmlContent.trim()">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                        <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p>Enter XML or upload a file to see preview</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

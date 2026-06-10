@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto" x-data="topicView({{ mcqs | tojson }}, 'mcqs')">
+    <div class="mb-6"><h1 class="text-2xl font-bold text-slate-900">Question Bank</h1><p class="text-slate-500">Browse and practice all parsed MCQs.</p></div>
+    <div class="space-y-6">
+        <template x-if="questions.length === 0"><div class="bg-white p-12 rounded-xl border border-slate-200 text-center text-slate-500">No MCQs found. <a href="/upload/" class="text-primary-600 hover:underline">Upload XML</a> first!</div></template>
+        <template x-for="q in questions" :key="q.id">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div><span class="text-[10px] font-bold text-slate-500 uppercase" x-text="q.topic_title"></span><h3 class="text-lg font-semibold text-slate-900 mt-1" x-text="q.question"></h3></div>
+                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-full uppercase" x-text="q.difficulty"></span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <template x-for="opt in q.options" :key="opt.key">
+                        <button @click="selectAnswer(q.id, opt.key)" class="text-left p-3 rounded-lg border-2 transition-all flex items-center gap-3" :class="getOptClass(q.id, opt.key)">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-100" x-text="opt.key"></span>
+                            <span class="text-sm" x-text="opt.text"></span>
+                        </button>
+                    </template>
+                </div>
+                <div x-show="answered[q.id]" x-transition class="mt-4 p-4 rounded-lg" :class="isCorrect(q.id) ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200'">
+                    <p class="font-semibold mb-2 text-sm" :class="isCorrect(q.id) ? 'text-emerald-800' : 'text-rose-800'" x-text="isCorrect(q.id) ? '✓ Correct!' : '✗ Incorrect. Answer: ' + q.answer"></p>
+                    <p class="text-sm text-slate-700" x-text="q.explanation"></p>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/topic.js') }}"></script>
+{% endblock %}
