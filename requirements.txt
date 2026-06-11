@@ -3,3 +3,5 @@ Flask-Login==0.6.3
 Werkzeug==3.0.1
 Markdown==3.5.1
 python-dotenv==1.0.0
+gunicorn==22.0.0
+serverless-wsgi==3.1.0

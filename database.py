@@ -5,6 +5,7 @@ from config import Config
 
 def get_db():
     if 'db' not in g:
+        os.makedirs(os.path.dirname(Config.DATABASE), exist_ok=True)
         g.db = sqlite3.connect(Config.DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
@@ -18,6 +19,7 @@ def close_db(e=None):
         db.close()
 
 def init_db():
+    os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
     db = get_db()
     try:
         db.executescript('''
