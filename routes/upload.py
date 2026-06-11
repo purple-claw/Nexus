@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, flash
+from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from database import get_db
 from services.study_service import save_parsed_document
@@ -10,21 +10,36 @@ bp = Blueprint('upload', __name__, url_prefix='/upload')
 @login_required
 def upload_page():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file selected', 'error')
+        ajax = bool(request.form.get('xml_content'))
+
+        content = None
+        filename = 'document.xml'
+
+        if 'file' in request.files and request.files['file'].filename:
+            f = request.files['file']
+            content = f.read().decode('utf-8')
+            filename = f.filename
+        elif request.form.get('xml_content'):
+            content = request.form['xml_content']
+
+        if not content:
+            if ajax:
+                return jsonify({"error": "No XML content provided"}), 400
+            flash('No XML content provided', 'error')
             return render_template('upload.html')
-        file = request.files['file']
-        if not file.filename:
-            flash('No file selected', 'error')
-            return render_template('upload.html')
+
         try:
-            content = file.read().decode('utf-8')
             parsed = parse_document(content)
             db = get_db()
-            topic_id = save_parsed_document(db, current_user.id, parsed, file.filename)
+            topic_id = save_parsed_document(db, current_user.id, parsed, filename)
+            if ajax:
+                return jsonify({"success": True, "message": "Document saved successfully!", "topic_id": topic_id})
             flash('Document uploaded successfully!', 'success')
             return redirect(url_for('topic.topic_detail', topic_id=topic_id))
         except Exception as e:
+            if ajax:
+                return jsonify({"error": str(e)}), 500
             flash(f'Error: {str(e)}', 'error')
             return render_template('upload.html')
+
     return render_template('upload.html')

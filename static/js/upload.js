@@ -147,13 +147,13 @@ function uploadApp() {
             try {
                 const response = await fetch('/upload/', {
                     method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body: formData
                 });
                 const data = await response.json();
                 
-                if (data.success) {
+                if (response.ok && data.success) {
                     showToast(data.message, 'success');
-                    // Clear form after success
                     this.xmlContent = '';
                     this.parseXml();
                 } else {
