@@ -33,20 +33,20 @@ def register():
             errors.append("Passwords do not match")
 
         db = get_db()
-        if db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone():
+        if db.find_one('users', username=username):
             errors.append("Username already taken")
-        if db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone():
+        if db.find_one('users', email=email):
             errors.append("Email already registered")
 
         if errors:
             return render_template('auth/register.html', errors=errors, username=username, email=email)
 
-        db.execute(
-            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-            (username, email, generate_password_hash(password))
-        )
-        db.commit()
-        user = db.execute('SELECT id, username, email FROM users WHERE username = ?', (username,)).fetchone()
+        user_id = db.insert('users', {
+            'username': username,
+            'email': email,
+            'password_hash': generate_password_hash(password),
+        })
+        user = db.get('users', user_id)
         login_user(User(user['id'], user['username'], user['email']))
         return redirect(url_for('dashboard.index'))
 
@@ -61,7 +61,7 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         db = get_db()
-        user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        user = db.find_one('users', username=username)
         if not user or not check_password_hash(user['password_hash'], password):
             return render_template('auth/login.html', error="Invalid username or password", username=username)
         login_user(User(user['id'], user['username'], user['email']))

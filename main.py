@@ -21,7 +21,7 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         db = get_db()
-        user = db.execute('SELECT id, username, email FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = db.get('users', int(user_id))
         if user:
             return AuthUser(user['id'], user['username'], user['email'])
         return None
@@ -33,8 +33,7 @@ def create_app():
         topic_count = 0
         if current_user.is_authenticated:
             db = get_db()
-            row = db.execute('SELECT COUNT(*) as cnt FROM topics WHERE user_id = ?', (current_user.id,)).fetchone()
-            topic_count = row['cnt'] if row else 0
+            topic_count = db.count('topics', user_id=current_user.id)
         return dict(today=today, navigation=nav, sidebar_topic_count=topic_count)
 
     with app.app_context():

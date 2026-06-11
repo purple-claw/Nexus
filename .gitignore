@@ -4,5 +4,4 @@ __pycache__
 .venv
 venv
 instance/
-*.db
 .DS_Store

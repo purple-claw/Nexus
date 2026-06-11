@@ -14,24 +14,24 @@ def calendar_page():
 @login_required
 def get_events():
     db = get_db()
-    plans = db.execute('''
-        SELECT dp.plan_date, COUNT(*) as topic_count
-        FROM daily_plans dp
-        JOIN topics t ON dp.topic_id = t.id
-        WHERE dp.user_id = ?
-        GROUP BY dp.plan_date
-    ''', (current_user.id,)).fetchall()
+    plans = db.find('daily_plans', user_id=current_user.id)
     events = {}
-    for row in plans:
-        events[row['plan_date']] = {"topics": row['topic_count']}
+    for p in plans:
+        d = p['plan_date']
+        if d not in events:
+            events[d] = {'topics': 0}
+        events[d]['topics'] += 1
     return jsonify(events)
 
 @bp.route('/available', methods=['GET'])
 @login_required
 def get_available():
     db = get_db()
-    topics = db.execute('SELECT id, title FROM topics WHERE user_id = ? ORDER BY title LIMIT 100', (current_user.id,)).fetchall()
-    return jsonify({"topics": [{"id": row['id'], "title": row['title']} for row in topics]})
+    topics = db.find('topics', user_id=current_user.id)
+    topics.sort(key=lambda t: t.get('title', ''))
+    return jsonify({
+        "topics": [{"id": t['id'], "title": t['title']} for t in topics[:100]]
+    })
 
 @bp.route('/assign', methods=['POST'])
 @login_required
@@ -47,13 +47,16 @@ def assign_content():
     except (TypeError, ValueError):
         return jsonify({"error": "A valid topic and YYYY-MM-DD date are required"}), 400
 
-    topic = db.execute('SELECT id FROM topics WHERE id = ? AND user_id = ?', (topic_id, current_user.id)).fetchone()
-    if not topic:
+    topic = db.get('topics', topic_id)
+    if not topic or topic.get('user_id') != current_user.id:
         return jsonify({"error": "Topic not found"}), 404
 
-    db.execute('''
-        INSERT OR IGNORE INTO daily_plans (user_id, plan_date, topic_id)
-        VALUES (?, ?, ?)
-    ''', (current_user.id, plan_date, topic_id))
-    db.commit()
+    existing = db.find_one('daily_plans', user_id=current_user.id, plan_date=plan_date, topic_id=topic_id)
+    if not existing:
+        db.insert('daily_plans', {
+            'user_id': current_user.id,
+            'plan_date': plan_date,
+            'topic_id': topic_id,
+        })
+
     return jsonify({"success": True})

@@ -25,16 +25,26 @@ def record_answer(mcq_id):
     data = request.get_json(silent=True) or {}
     is_correct = bool(data.get('is_correct', False))
     db = get_db()
-    mcq = db.execute('''
-        SELECT m.id FROM mcqs m
-        JOIN topics t ON m.topic_id = t.id
-        WHERE m.id = ? AND t.user_id = ?
-    ''', (mcq_id, current_user.id)).fetchone()
+
+    mcq = db.get('mcqs', mcq_id)
     if not mcq:
         return jsonify({"error": "Question not found"}), 404
+    topic = db.get('topics', mcq.get('topic_id'))
+    if not topic or topic.get('user_id') != current_user.id:
+        return jsonify({"error": "Question not found"}), 404
 
-    db.execute('''INSERT INTO progress (user_id, mcq_id, attempts, correct_count) VALUES (?, ?, 1, ?)
-        ON CONFLICT(user_id, mcq_id) DO UPDATE SET attempts = attempts + 1, correct_count = correct_count + ?''',
-        (current_user.id, mcq_id, 1 if is_correct else 0, 1 if is_correct else 0))
-    db.commit()
+    existing = db.find_one('progress', user_id=current_user.id, mcq_id=mcq_id)
+    if existing:
+        db.update('progress', existing['id'], {
+            'attempts': existing.get('attempts', 0) + 1,
+            'correct_count': existing.get('correct_count', 0) + (1 if is_correct else 0),
+        })
+    else:
+        db.insert('progress', {
+            'user_id': current_user.id,
+            'mcq_id': mcq_id,
+            'attempts': 1,
+            'correct_count': 1 if is_correct else 0,
+        })
+
     return jsonify({"success": True})

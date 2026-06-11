@@ -105,28 +105,20 @@ def parse_xml(content):
 
 def get_or_create_category(db, name, parent_name=None, user_id=None):
     name = _clean_text(name, "General")
-    parent_name = _clean_text(parent_name, None)
     parent_id = None
-    if parent_name:
-        parent = db.execute(
-            "SELECT id FROM categories WHERE name = ? AND parent_id IS NULL AND user_id = ?",
-            (parent_name, user_id)
-        ).fetchone()
-        if parent:
-            parent_id = parent['id']
-        else:
-            cursor = db.execute("INSERT INTO categories (name, parent_id, user_id) VALUES (?, NULL, ?)", (parent_name, user_id))
-            parent_id = cursor.lastrowid
+    if isinstance(parent_name, int):
+        parent_id = parent_name
+    elif parent_name:
+        parent_name = _clean_text(parent_name, None)
+        if parent_name:
+            parent = db.find_one('categories', name=parent_name, parent_id=None, user_id=user_id)
+            if parent:
+                parent_id = parent['id']
+            else:
+                parent_id = db.insert('categories', {'name': parent_name, 'parent_id': None, 'user_id': user_id})
 
-    category = db.execute(
-        "SELECT id FROM categories WHERE name = ? AND parent_id IS ? AND user_id = ?",
-        (name, parent_id, user_id)
-    ).fetchone()
+    category = db.find_one('categories', name=name, parent_id=parent_id, user_id=user_id)
     if category:
         return category['id']
     else:
-        cursor = db.execute(
-            "INSERT INTO categories (name, parent_id, user_id) VALUES (?, ?, ?)",
-            (name, parent_id, user_id)
-        )
-        return cursor.lastrowid
+        return db.insert('categories', {'name': name, 'parent_id': parent_id, 'user_id': user_id})

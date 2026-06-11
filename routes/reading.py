@@ -8,14 +8,16 @@ bp = Blueprint('reading', __name__, url_prefix='/reading')
 @login_required
 def reading_list():
     db = get_db()
-    texts = db.execute('''
-        SELECT rb.id, rb.title, rb.content, t.title as topic_title
-        FROM reading_blocks rb
-        JOIN topics t ON rb.topic_id = t.id
-        WHERE t.user_id = ?
-        ORDER BY rb.order_idx
-    ''', (current_user.id,)).fetchall()
-    result = [{"id": row['id'], "title": row['title'], "topic_title": row['topic_title'], "content": row['content']} for row in texts]
+    topics = db.find('topics', user_id=current_user.id)
+    result = []
+    for t in topics:
+        for rb in db.find('reading_blocks', topic_id=t['id']):
+            result.append({
+                'id': rb['id'],
+                'title': rb.get('title', ''),
+                'topic_title': t['title'],
+                'content': rb.get('content', ''),
+            })
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify(result)
     return render_template('reading/list.html', texts=result)
@@ -24,12 +26,13 @@ def reading_list():
 @login_required
 def reading_detail(text_id):
     db = get_db()
-    text = db.execute('''
-        SELECT rb.content, rb.title, t.title as topic_title
-        FROM reading_blocks rb
-        JOIN topics t ON rb.topic_id = t.id
-        WHERE rb.id = ? AND t.user_id = ?
-    ''', (text_id, current_user.id)).fetchone()
-    if not text:
+    rb = db.get('reading_blocks', text_id)
+    if not rb:
         return "Not found", 404
-    return render_template('reading/detail.html', title=text['title'], topic_title=text['topic_title'], content=text['content'])
+    topic = db.get('topics', rb.get('topic_id'))
+    if not topic or topic.get('user_id') != current_user.id:
+        return "Not found", 404
+    return render_template('reading/detail.html',
+                           title=rb.get('title', ''),
+                           topic_title=topic['title'],
+                           content=rb.get('content', ''))
