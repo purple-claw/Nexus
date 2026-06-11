@@ -1,32 +1,29 @@
 from flask import Blueprint, request, render_template, jsonify
+from flask_login import login_required, current_user
 from database import get_db
 
 bp = Blueprint('todos', __name__, url_prefix='/todos')
 
 @bp.route('/', methods=['GET'])
+@login_required
 def todos_list():
-    """Smart view: Shows all incomplete todos across the entire app, grouped by topic."""
     db = get_db()
     todos = db.execute('''
-        SELECT t.id, t.content, t.is_completed, top.title as topic_name
-        FROM todos t
-        JOIN topics top ON t.topic_id = top.id
-        WHERE t.is_completed = 0
-        ORDER BY top.title, t.order_idx
-    ''').fetchall()
+        SELECT td.*, t.title as topic_title
+        FROM todos td
+        JOIN topics t ON td.topic_id = t.id
+        WHERE t.user_id = ?
+        ORDER BY t.title, td.order_idx
+    ''', (current_user.id,)).fetchall()
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify([dict(t) for t in todos])
     return render_template('todos/list.html', todos=todos)
 
 @bp.route('/<int:todo_id>/toggle', methods=['POST'])
+@login_required
 def toggle_todo(todo_id):
-    """Robust toggle: Flips the status and returns the new state to the frontend."""
     db = get_db()
-    db.execute('''
-        UPDATE todos 
-        SET is_completed = 1 - is_completed 
-        WHERE id = ?
-    ''', (todo_id,))
+    db.execute('UPDATE todos SET is_completed = CASE WHEN is_completed THEN 0 ELSE 1 END WHERE id = ?', (todo_id,))
     db.commit()
-    
-    # Fetch new state to ensure frontend sync
-    todo = db.execute('SELECT is_completed FROM todos WHERE id = ?', (todo_id,)).fetchone()
-    return jsonify({"success": True, "is_completed": todo['is_completed']})
+    todo = db.execute('SELECT * FROM todos WHERE id = ?', (todo_id,)).fetchone()
+    return jsonify({"success": True, "is_completed": bool(todo['is_completed'])})

@@ -20,7 +20,8 @@ function calendarApp() {
             
             const days = [];
             for (let i = firstDay - 1; i >= 0; i--) {
-                days.push({ dayNum: daysInPrevMonth - i, isCurrentMonth: false, date: this.getDateStr(year, month - 1, daysInPrevMonth - i) });
+                const dateStr = this.getDateStr(year, month - 1, daysInPrevMonth - i);
+                days.push({ dayNum: daysInPrevMonth - i, isCurrentMonth: false, date: dateStr, events: this.events[dateStr] || { topics: 0 } });
             }
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = this.getDateStr(year, month, i);
@@ -28,18 +29,28 @@ function calendarApp() {
             }
             const remaining = 42 - days.length;
             for (let i = 1; i <= remaining; i++) {
-                days.push({ dayNum: i, isCurrentMonth: false, date: this.getDateStr(year, month + 1, i) });
+                const dateStr = this.getDateStr(year, month + 1, i);
+                days.push({ dayNum: i, isCurrentMonth: false, date: dateStr, events: this.events[dateStr] || { topics: 0 } });
             }
             return days;
         },
         
         getDateStr(year, month, day) {
             const d = new Date(year, month, day);
-            return d.toISOString().split('T')[0];
+            return this.formatDateKey(d);
         },
         
-        isToday(dateStr) { return dateStr === new Date().toISOString().split('T')[0]; },
-        changeMonth(offset) { this.currentDate.setMonth(this.currentDate.getMonth() + offset); },
+        formatDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
+        
+        isToday(dateStr) { return dateStr === this.formatDateKey(new Date()); },
+        changeMonth(offset) {
+            this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + offset, 1);
+        },
         
         async selectDate(date) {
             this.selectedDate = date;
@@ -48,7 +59,10 @@ function calendarApp() {
             this.showModal = true;
         },
         
-        formatDate(dateStr) { return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); },
+        formatDate(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        },
         
         async fetchEvents() {
             try { const res = await fetch('/calendar/events'); this.events = await res.json(); } catch (e) { console.error(e); }

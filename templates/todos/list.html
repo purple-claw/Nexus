@@ -1,38 +1,43 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-slate-900">Pending Tasks</h1>
-        <p class="text-slate-500 mt-2">All incomplete to-dos across your study topics.</p>
+<div class="max-w-4xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Tasks</h1>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">All incomplete to-dos across your study topics</p>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {% if todos %}
-            {% set current_topic = None %}
-            {% for todo in todos %}
-                {% if todo.topic_name != current_topic %}
-                    {% if not loop.first %}</div>{% endif %}
-                    {% set current_topic = todo.topic_name %}
-                    <div class="bg-slate-50 px-6 py-3 border-b border-slate-200">
-                        <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">{{ current_topic }}</h3>
-                    </div>
-                    <div class="divide-y divide-slate-100">
-                {% endif %}
-                
-                <div class="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors group">
-                    <input type="checkbox" 
-                           class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer transition-all"
-                           onchange="toggleTodoGlobal({{ todo.id }}, this)">
-                    <span class="text-slate-700 flex-1 group-hover:text-slate-900 transition-colors">{{ todo.content }}</span>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        {% if groups %}
+        <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {% for group in groups %}
+            <div>
+                <div class="px-6 py-3 bg-zinc-50 dark:bg-black border-b border-zinc-200 dark:border-zinc-800">
+                    <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        {{ group.topic }}
+                    </h3>
                 </div>
+                <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                    {% for todo in group.todos %}
+                    <div class="flex items-center gap-3 px-6 py-3.5 hover:bg-zinc-100 dark:hover:bg-black transition-colors group">
+                        <input type="checkbox" class="w-5 h-5 rounded border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 focus:ring-emerald-500 cursor-pointer transition-all"
+                               onchange="toggleTodoGlobal({{ todo.id }}, this)"
+                               {% if todo.is_completed %}checked{% endif %}>
+                        <span class="text-sm text-zinc-700 dark:text-zinc-300 flex-1 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors {% if todo.is_completed %}line-through text-zinc-400 dark:text-zinc-500{% endif %}">{{ todo.content }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             {% endfor %}
-            </div>
+        </div>
         {% else %}
-            <div class="p-12 text-center text-slate-500">
-                <svg class="w-16 h-16 mx-auto mb-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <p class="text-lg font-medium text-slate-700">All caught up!</p>
-                <p class="text-sm mt-1">You have no pending tasks.</p>
+        <div class="flex flex-col items-center justify-center py-20 px-6">
+            <div class="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                <svg class="w-7 h-7 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
+            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">All caught up!</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">You have no pending tasks</p>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -45,15 +50,11 @@ function toggleTodoGlobal(id, checkbox) {
         .then(res => res.json())
         .then(data => {
             if (data.success && data.is_completed) {
-                // Animate removal
-                const row = checkbox.closest('.p-4');
+                const row = checkbox.closest('.flex');
                 row.style.opacity = '0';
                 row.style.transform = 'translateX(20px)';
                 row.style.transition = 'all 0.3s ease';
-                setTimeout(() => {
-                    row.remove();
-                    // Optional: reload if empty, or just let it be
-                }, 300);
+                setTimeout(() => row.remove(), 300);
             } else if (data.success && !data.is_completed) {
                 checkbox.checked = false;
             }

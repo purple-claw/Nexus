@@ -1,51 +1,133 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p class="text-slate-500 mt-1">Welcome back. Here's your study overview.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium text-slate-500">Total MCQs</h3>
-                <span class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </span>
-            </div>
-            <p class="text-3xl font-bold text-slate-900">{{ stats.mcq_count or 0 }}</p>
-            <p class="text-xs text-slate-500 mt-1">Across all documents</p>
+<div class="max-w-6xl mx-auto space-y-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Dashboard</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Your study overview for today</p>
         </div>
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium text-slate-500">Pending Todos</h3>
-                <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                </span>
-            </div>
-            <p class="text-3xl font-bold text-slate-900">{{ stats.pending_todos or 0 }}</p>
-            <p class="text-xs text-slate-500 mt-1">Tasks to complete</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-medium text-slate-500">Today's Plan</h3>
-                <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                </span>
-            </div>
-            <p class="text-3xl font-bold text-slate-900">{{ stats.today_plans or 0 }}</p>
-            <p class="text-xs text-slate-500 mt-1">Items assigned for today</p>
+        <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+            <svg class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            {{ today }}
         </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
-        <h3 class="text-lg font-semibold text-slate-900 mb-2">Ready to study?</h3>
-        <p class="text-slate-500 mb-6">Upload your markdown notes or visit the calendar to plan your day.</p>
-        <div class="flex justify-center gap-4">
-            <a href="/upload/" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Upload Notes</a>
-            <a href="/calendar/" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-6 py-2.5 rounded-lg font-medium transition-colors">View Calendar</a>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm card-hover animate-card surface-card">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Topics</p>
+                <span class="w-9 h-9 rounded-lg bg-sky-900/40 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </span>
+            </div>
+            <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ stats.topic_count }}</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ stats.category_count }} categories</p>
         </div>
+        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm card-hover animate-card surface-card">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Questions</p>
+                <span class="w-9 h-9 rounded-lg bg-amber-900/40 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                </span>
+            </div>
+            <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ stats.mcq_count }}</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                {% if stats.accuracy is not none %}
+                {{ stats.accuracy }}% accuracy
+                {% else %}
+                No attempts yet
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm card-hover animate-card surface-card">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Tasks</p>
+                <span class="w-9 h-9 rounded-lg bg-emerald-900/40 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                </span>
+            </div>
+            <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ stats.pending_todos }}</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Pending tasks</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm card-hover animate-card surface-card">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Today's Plan</p>
+                <span class="w-9 h-9 rounded-lg bg-violet-900/40 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </span>
+            </div>
+            <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ stats.today_plans }}</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Topics scheduled</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden surface-card">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h2 class="text-base font-semibold text-zinc-900 dark:text-white">Recent Topics</h2>
+            <a href="/library/" class="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">View all</a>
+        </div>
+        {% if recent_topics %}
+        <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {% for topic in recent_topics %}
+            <a href="/topic/{{ topic.id }}/" class="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 dark:hover:bg-black transition-colors card-hover">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-zinc-900 dark:text-white truncate">{{ topic.title }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ topic.category_name }}</p>
+                    </div>
+                </div>
+                <svg class="w-4 h-4 text-zinc-400 dark:text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+            <div class="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">No topics yet</p>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Upload an XML document to get started</p>
+            <a href="/upload/" class="mt-4 inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm">Upload XML</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 surface-card">
+        <h2 class="text-base font-semibold text-zinc-900 dark:text-white mb-4">Practice Progress</h2>
+        {% if stats.attempts > 0 %}
+        <div class="space-y-4">
+            <div>
+                <div class="flex items-center justify-between text-sm mb-1.5">
+                    <span class="font-medium text-zinc-700 dark:text-zinc-300">Accuracy</span>
+                    <span class="font-semibold text-zinc-900 dark:text-white">{{ stats.accuracy }}%</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all" style="width: {{ stats.accuracy }}%"></div>
+                </div>
+            </div>
+            <div class="flex gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800"></span>
+                    <span class="text-zinc-700 dark:text-zinc-300">{{ stats.correct_count }} correct</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-zinc-200 dark:bg-zinc-700"></span>
+                    <span class="text-zinc-700 dark:text-zinc-300">{{ stats.attempts - stats.correct_count }} incorrect</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-10">
+            <div class="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">No practice data yet. Head to the Question Bank to start.</p>
+            <a href="/mcq/" class="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors">Question Bank &rarr;</a>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

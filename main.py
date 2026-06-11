@@ -1,51 +1,59 @@
+from datetime import date
 from flask import Flask, g
+from flask_login import LoginManager, current_user
+from database import init_db, get_db, close_db
 from config import Config
-from database import close_db, init_db, get_db
-import os
+from routes.auth import bp as auth_bp, User as AuthUser
+from navigation import build_navigation
+
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    os.makedirs(os.path.dirname(app.config['DATABASE']), exist_ok=True)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    login_manager.init_app(app)
 
     app.teardown_appcontext(close_db)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        db = get_db()
+        user = db.execute('SELECT id, username, email FROM users WHERE id = ?', (user_id,)).fetchone()
+        if user:
+            return AuthUser(user['id'], user['username'], user['email'])
+        return None
+
+    @app.context_processor
+    def inject_globals():
+        today = date.today().isoformat()
+        nav = build_navigation()
+        topic_count = 0
+        if current_user.is_authenticated:
+            db = get_db()
+            row = db.execute('SELECT COUNT(*) as cnt FROM topics WHERE user_id = ?', (current_user.id,)).fetchone()
+            topic_count = row['cnt'] if row else 0
+        return dict(today=today, navigation=nav, sidebar_topic_count=topic_count)
 
     with app.app_context():
         init_db()
 
-    # Simple, robust context processor
-    @app.context_processor
-    def inject_globals():
-        db = get_db()
-        first_topic = db.execute('SELECT id, title FROM topics ORDER BY id LIMIT 1').fetchone()
-        return dict(first_topic=first_topic)
+    from routes import dashboard, library, reading, topic, mcq, upload, calendar, daily, todos
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard.bp)
+    app.register_blueprint(library.bp)
+    app.register_blueprint(reading.bp)
+    app.register_blueprint(topic.bp)
+    app.register_blueprint(mcq.bp)
+    app.register_blueprint(upload.bp)
+    app.register_blueprint(calendar.bp)
+    app.register_blueprint(daily.bp)
+    app.register_blueprint(todos.bp)
 
-    from routes.dashboard import bp as dashboard_bp
-    from routes.upload import bp as upload_bp
-    from routes.calendar import bp as calendar_bp
-    from routes.daily import bp as daily_bp
-    from routes.mcq import bp as mcq_bp
-    from routes.reading import bp as reading_bp
-    from routes.tree import bp as tree_bp
-    from routes.topic import bp as topic_bp
-    from routes.library import bp as library_bp
-    from routes.todos import bp as todos_bp
-
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(upload_bp)
-    app.register_blueprint(calendar_bp)
-    app.register_blueprint(daily_bp)
-    app.register_blueprint(mcq_bp)
-    app.register_blueprint(reading_bp)
-    app.register_blueprint(tree_bp)
-    app.register_blueprint(topic_bp)
-    app.register_blueprint(library_bp)
-    app.register_blueprint(todos_bp)
-    
     return app
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

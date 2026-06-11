@@ -1,78 +1,60 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<div class="max-w-7xl mx-auto" x-data="libraryApp()">
-    <div class="mb-8 flex justify-between items-end">
-        <div>
-            <h1 class="text-3xl font-bold text-slate-900">Content Library</h1>
-            <p class="text-slate-500 mt-2">Browse your categorized study materials.</p>
-        </div>
-        <a href="/todos/" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-            View All Pending Todos
-        </a>
+<div class="max-w-6xl mx-auto space-y-8">
+    <div>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Library</h1>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Browse your study material by category</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for cat in categories %}
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-primary-300 transition-all duration-300 p-6 cursor-pointer group"
-             @click="toggleCategory({{ cat.id }})">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center text-2xl group-hover:bg-primary-100 transition-colors">
-                    📚
+    <div class="space-y-4">
+        {% for category in categories %}
+        {% if category.topics or category.children %}
+        <div x-data="{ open: {{ 'true' if category.topics else 'false' }} }" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden card-hover surface-card">
+            <button @click="open = !open" class="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-50 dark:hover:bg-black transition-colors text-left">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ category.name }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ category.total_topic_count }} topic{{ 's' if category.total_topic_count != 1 }}</p>
+                    </div>
                 </div>
-                <svg class="w-5 h-5 text-slate-400 transition-transform duration-300" :class="openCats[{{ cat.id }}] ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-            <h3 class="text-lg font-semibold text-slate-900 group-hover:text-primary-600 transition-colors">{{ cat.name }}</h3>
-            <p class="text-sm text-slate-500 mt-1">{{ cat.topic_count }} topics</p>
-            
-            <!-- Nested Subcategories/Topics (Smooth Collapse) -->
-            <div x-show="openCats[{{ cat.id }}]" x-collapse class="mt-4 pt-4 border-t border-slate-100 space-y-3">
-                {% for sub in subcategories if sub.parent_id == cat.id %}
-                <div class="pl-2">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{{ sub.name }}</p>
-                    {% for topic in topics if topic.category_id == sub.id %}
-                    <a href="/topic/{{ topic.id }}" class="flex items-center gap-2 text-sm text-slate-700 hover:text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md transition-colors">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                        {{ topic.title }}
-                    </a>
+                <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-500 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <div x-show="open" x-collapse>
+                <div class="px-5 pb-4 space-y-2">
+                    {% for topic in category.topics %}
+                    {% include 'components/topic_row.html' %}
+                    {% endfor %}
+
+                    {% for child in category.children %}
+                    <div x-data="{ childOpen: false }" class="ml-2">
+                        <button @click="childOpen = !childOpen" class="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-black transition-colors text-left">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                                    <svg class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                </div>
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ child.name }}</span>
+                                <span class="text-xs text-zinc-400 dark:text-zinc-500">({{ child.total_topic_count }})</span>
+                            </div>
+                            <svg class="w-4 h-4 text-zinc-400 dark:text-zinc-500 transition-transform duration-200" :class="childOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div x-show="childOpen" x-collapse>
+                            <div class="ml-4 mt-2 space-y-2 pb-2">
+                                {% for topic in child.topics %}
+                                {% include 'components/topic_row.html' %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
-                {% endfor %}
-                
-                <!-- Direct topics under this root category -->
-                {% for topic in topics if topic.category_id == cat.id and not topic.parent_id %}
-                <a href="/topic/{{ topic.id }}" class="flex items-center gap-2 text-sm text-slate-700 hover:text-primary-600 hover:bg-primary-50 px-2 py-1.5 rounded-md transition-colors">
-                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                    {{ topic.title }}
-                </a>
-                {% endfor %}
-                
-                {% if cat.topic_count == 0 %}
-                <p class="text-xs text-slate-400 italic px-2">No topics uploaded yet.</p>
-                {% endif %}
             </div>
         </div>
-        {% endfor %}
-        
-        {% if not categories %}
-        <div class="col-span-full bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center">
-            <p class="text-slate-500 mb-4">Your library is empty.</p>
-            <a href="/upload/" class="text-primary-600 hover:text-primary-700 font-medium">Upload your first XML document →</a>
-        </div>
         {% endif %}
+        {% endfor %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function libraryApp() {
-    return {
-        openCats: {},
-        toggleCategory(id) {
-            this.openCats[id] = !this.openCats[id];
-        }
-    }
-}
-</script>
 {% endblock %}

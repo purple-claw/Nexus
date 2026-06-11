@@ -1,0 +1,11 @@
+{
+  "name": "test-agent",
+  "description": "A minimal working agent",
+  "role": "primary",
+  "permissions": [
+    { "permission": "*", "action": "allow", "pattern": "*" },
+    { "permission": "read", "action": "allow", "pattern": "*" },
+    { "permission": "edit", "action": "allow", "pattern": "*" },
+    { "permission": "bash", "action": "allow", "pattern": "*" }
+  ]
+}

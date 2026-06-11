@@ -1,15 +1,15 @@
+from datetime import date
 from flask import Blueprint, render_template
+from flask_login import login_required, current_user
 from database import get_db
+from services.study_service import dashboard_summary
 
 bp = Blueprint('dashboard', __name__)
 
 @bp.route('/')
+@login_required
 def index():
     db = get_db()
-    stats = db.execute('''
-        SELECT 
-            (SELECT COUNT(*) FROM mcqs) as mcq_count,
-            (SELECT COUNT(*) FROM todos WHERE is_completed = 0) as pending_todos,
-            (SELECT COUNT(*) FROM daily_plans WHERE plan_date = date('now')) as today_plans
-    ''').fetchone()
-    return render_template('dashboard.html', stats=stats)
+    today = date.today().isoformat()
+    summary = dashboard_summary(db, current_user.id, today)
+    return render_template('dashboard.html', stats=summary["stats"], recent_topics=summary["recent_topics"])
