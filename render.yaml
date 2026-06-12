@@ -9,7 +9,7 @@ services:
     runtime: python
     region: oregon
     plan: free
-    buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt
+    buildCommand: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt
     startCommand: gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 2
     envVars:
       - key: FLASK_ENV
