@@ -9,6 +9,12 @@ export function AuthProvider({ children }) {
 
   const fetchUser = useCallback(async () => {
     try {
+      const token = localStorage.getItem('nexus_token')
+      if (!token) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
       const { data } = await client.get('/auth/me')
       setUser(data.user)
     } catch {
@@ -22,18 +28,25 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     const { data } = await client.post('/auth/login', { username, password })
+    localStorage.setItem('nexus_token', data.token)
     setUser(data.user)
     return data.user
   }
 
   const register = async (username, email, password) => {
     const { data } = await client.post('/auth/register', { username, email, password })
+    localStorage.setItem('nexus_token', data.token)
     setUser(data.user)
     return data.user
   }
 
   const logout = async () => {
-    await client.post('/auth/logout')
+    try {
+      await client.post('/auth/logout')
+    } catch {
+      // ignore
+    }
+    localStorage.removeItem('nexus_token')
     setUser(null)
   }
 
