@@ -1,7 +1,11 @@
-__pycache__
+venv/
+instance/
+uploads/
+__pycache__/
 *.pyc
 .env
-.venv
-venv
-instance/
-.DS_Store
+*.egg-info/
+dist/
+.build/
+frontend/node_modules/
+frontend/dist/

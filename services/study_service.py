@@ -12,24 +12,42 @@ def parse_options(value):
 
 def dashboard_summary(db, user_id, today):
     plans = db.find('daily_plans', user_id=user_id, plan_date=today)
+    topic_ids = [p['topic_id'] for p in plans if p.get('topic_id')]
+
+    # If nothing scheduled today, show all recent topics
+    if not topic_ids:
+        all_topics = db.find('topics', user_id=user_id)
+        all_topics.sort(key=lambda t: t.get('id', 0), reverse=True)
+        topic_ids = [t['id'] for t in all_topics[:5]]
 
     topics = []
     reading = []
     mcqs = []
     todos = []
 
-    for plan in plans:
-        t = db.get('topics', plan.get('topic_id'))
-        if t:
-            cat = db.get('categories', t.get('category_id'))
-            topics.append({
-                'id': t['id'],
-                'title': t['title'],
-                'description': t.get('description', ''),
-                'category_name': cat['name'] if cat else '',
-            })
-
-    topic_ids = [p['topic_id'] for p in plans if p.get('topic_id')]
+    # If we have plans, use the plan ordering; otherwise use DB order
+    if plans:
+        for plan in plans:
+            t = db.get('topics', plan.get('topic_id'))
+            if t:
+                cat = db.get('categories', t.get('category_id'))
+                topics.append({
+                    'id': t['id'],
+                    'title': t['title'],
+                    'description': t.get('description', ''),
+                    'category_name': cat['name'] if cat else '',
+                })
+    else:
+        for tid in topic_ids:
+            t = db.get('topics', tid)
+            if t:
+                cat = db.get('categories', t.get('category_id'))
+                topics.append({
+                    'id': t['id'],
+                    'title': t['title'],
+                    'description': t.get('description', ''),
+                    'category_name': cat['name'] if cat else '',
+                })
 
     for tid in topic_ids:
         for r in db.find('reading_blocks', topic_id=tid):
@@ -53,11 +71,20 @@ def dashboard_summary(db, user_id, today):
 
     accuracy = round((mcq_correct / mcq_attempts) * 100) if mcq_attempts else None
 
+    # Count all user content for stats
+    user_topic_ids = {t['id'] for t in db.find('topics', user_id=user_id)}
+    total_reading = sum(1 for r in db.find('reading_blocks') if r.get('topic_id') in user_topic_ids)
+    total_mcqs = sum(1 for m in db.find('mcqs') if m.get('topic_id') in user_topic_ids)
+    total_todos = len(todos) or sum(
+        1 for td in db.find('todos')
+        if td.get('topic_id') in user_topic_ids and not td.get('is_completed')
+    )
+
     stats = {
-        'topic_count': len(topics),
-        'mcq_count': len(mcqs),
-        'reading_count': len(reading),
-        'pending_todos': pending_todos,
+        'topic_count': len(user_topic_ids),
+        'mcq_count': total_mcqs,
+        'reading_count': total_reading,
+        'pending_todos': total_todos,
         'attempts': mcq_attempts,
         'correct_count': mcq_correct,
         'accuracy': accuracy,

@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import threading
 from datetime import datetime
 
@@ -7,7 +8,7 @@ from datetime import datetime
 class JsonDB:
     def __init__(self, path):
         self.path = path
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.data = {}
         self.counters = {}
         self._load()
@@ -28,10 +29,15 @@ class JsonDB:
             self.counters[table] = max_id + 1
 
     def _save(self):
-        tmp = self.path + '.tmp'
-        with open(tmp, 'w') as f:
-            json.dump(self.data, f, indent=2, default=str)
-        os.replace(tmp, self.path)
+        with self.lock:
+            fd, tmp = tempfile.mkstemp(dir=os.path.dirname(self.path))
+            try:
+                with os.fdopen(fd, 'w') as f:
+                    json.dump(self.data, f, indent=2, default=str)
+                os.replace(tmp, self.path)
+            except:
+                os.unlink(tmp)
+                raise
 
     def table(self, name):
         return self.data.setdefault(name, [])
