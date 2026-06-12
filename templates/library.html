@@ -1,60 +1,62 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="max-w-6xl mx-auto space-y-8">
-    <div>
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Library</h1>
-        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Browse your study material by category</p>
-    </div>
+  <div>
+    <h1 class="text-2xl font-bold text-default tracking-tight">Library</h1>
+    <p class="text-sm text-muted mt-1">Browse your study material by category</p>
+  </div>
 
-    <div class="space-y-4">
-        {% for category in categories %}
-        {% if category.topics or category.children %}
-        <div x-data="{ open: {{ 'true' if category.topics else 'false' }} }" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden card-hover surface-card">
-            <button @click="open = !open" class="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-50 dark:hover:bg-black transition-colors text-left">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ category.name }}</p>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ category.total_topic_count }} topic{{ 's' if category.total_topic_count != 1 }}</p>
-                    </div>
-                </div>
-                <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-500 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-
-            <div x-show="open" x-collapse>
-                <div class="px-5 pb-4 space-y-2">
-                    {% for topic in category.topics %}
-                    {% include 'components/topic_row.html' %}
-                    {% endfor %}
-
-                    {% for child in category.children %}
-                    <div x-data="{ childOpen: false }" class="ml-2">
-                        <button @click="childOpen = !childOpen" class="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-black transition-colors text-left">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                                </div>
-                                <span class="text-sm font-medium text-muted">{{ child.name }}</span>
-                                <span class="text-xs text-zinc-400 dark:text-zinc-500">({{ child.total_topic_count }})</span>
-                            </div>
-                            <svg class="w-4 h-4 text-zinc-400 dark:text-zinc-500 transition-transform duration-200" :class="childOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div x-show="childOpen" x-collapse>
-                            <div class="ml-4 mt-2 space-y-2 pb-2">
-                                {% for topic in child.topics %}
-                                {% include 'components/topic_row.html' %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+  <div class="space-y-3">
+    {% for category in categories %}
+    {% if category.topics or category.children %}
+    <div x-data="{ open: {{ 'true' if category.topics else 'false' }} }" class="card overflow-hidden">
+      <button @click="open = !open" class="w-full flex items-center justify-between px-5 py-4 hover:surface-hover transition-colors text-left">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg surface-elevated flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-default">{{ category.name }}</p>
+            <p class="text-xs text-muted">{{ category.total_topic_count }} topic{{ 's' if category.total_topic_count != 1 }}</p>
+          </div>
         </div>
-        {% endif %}
-        {% endfor %}
+        <svg class="w-5 h-5 text-subtle transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+
+      <div x-show="open" x-collapse>
+        <div class="divide-y divide-default">
+          <div class="px-5 pb-4 space-y-1 pt-2">
+            {% for topic in category.topics %}
+            {% include 'components/topic_row.html' %}
+            {% endfor %}
+
+            {% for child in category.children %}
+            <div x-data="{ childOpen: false }">
+              <button @click="childOpen = !childOpen" class="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:surface-hover transition-colors text-left">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-7 h-7 rounded-md surface-elevated flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                  </div>
+                  <span class="text-sm font-medium text-muted">{{ child.name }}</span>
+                  <span class="text-xs text-subtle">({{ child.total_topic_count }})</span>
+                </div>
+                <svg class="w-4 h-4 text-subtle transition-transform duration-200" :class="childOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div x-show="childOpen" x-collapse>
+                <div class="ml-4 mt-1 space-y-1 pb-2">
+                  {% for topic in child.topics %}
+                  {% include 'components/topic_row.html' %}
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
     </div>
+    {% endif %}
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

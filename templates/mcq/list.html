@@ -1,24 +1,24 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-4xl mx-auto space-y-6 page-enter">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Question Bank</h1>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ mcqs|length }} question{{ 's' if mcqs|length != 1 }} total</p>
+            <h1 class="text-2xl font-bold text-default tracking-tight">Question Bank</h1>
+            <p class="text-sm text-muted mt-1">{{ mcqs|length }} question{{ 's' if mcqs|length != 1 }} total</p>
         </div>
-        <a href="/mcq/practice/" class="inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm">
+        <a href="/mcq/practice/" class="btn btn-primary">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             Start Practice
         </a>
     </div>
 
-    <div class="border-b border-zinc-200 dark:border-zinc-800">
+    <div class="border-b border-default">
         <nav class="flex gap-6 -mb-px" aria-label="Modes">
-            <a href="/mcq/" class="inline-flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 border-primary-600 text-zinc-900 dark:text-white">
+            <a href="/mcq/" class="inline-flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 border-accent text-default">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                 Browse
             </a>
-            <a href="/mcq/practice/" class="inline-flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-200 dark:hover:border-zinc-700 transition-colors">
+            <a href="/mcq/practice/" class="inline-flex items-center gap-2 px-1 py-3 text-sm font-medium border-b-2 border-transparent text-muted hover:text-default hover:border-default transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Practice
             </a>
@@ -28,44 +28,44 @@
     {% if mcqs %}
     <div class="space-y-4">
         {% for q in mcqs %}
-        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden card-hover">
+        <div class="card overflow-hidden">
             <div class="p-5 sm:p-6">
                 <div class="flex items-start justify-between gap-4 mb-4">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md surface-hover text-muted text-xs font-medium">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                                 {{ q.topic_title }}
                             </span>
                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-                                {% if q.difficulty == 'easy' %}bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                                {% if q.difficulty == 'easy' %}bg-emerald-900/40 text-emerald-300
                                 {% elif q.difficulty == 'medium' %}bg-amber-900/40 text-amber-300
                                 {% elif q.difficulty == 'hard' %}bg-rose-900/40 text-rose-300
-                                {% else %}bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300{% endif %}">
+                                {% else %}surface-hover text-muted{% endif %}">
                                 {{ q.difficulty or 'medium' }}
                             </span>
-                            <span class="text-xs text-zinc-400 dark:text-zinc-500">#{{ q.id }}</span>
+                            <span class="text-xs text-subtle">#{{ q.id }}</span>
                         </div>
-                        <p class="text-sm font-medium text-zinc-900 dark:text-white leading-relaxed">{{ q.question }}</p>
+                        <p class="text-sm font-medium text-default leading-relaxed">{{ q.question }}</p>
                     </div>
                 </div>
 
                 <div class="space-y-2 mb-4">
                     {% for opt in q.options %}
-                    <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300 hover:border-zinc-200 dark:hover:border-zinc-700 hover:bg-black transition-colors">
-                        <span class="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-semibold text-zinc-700 dark:text-zinc-300 shrink-0">{{ opt.key }}</span>
+                    <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-default text-sm text-default hover:surface-hover transition-colors">
+                        <span class="w-6 h-6 rounded-full surface-hover flex items-center justify-center text-xs font-semibold text-muted shrink-0">{{ opt.key }}</span>
                         <span>{{ opt.text }}</span>
                     </div>
                     {% endfor %}
                 </div>
 
                 <details class="group">
-                    <summary class="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white cursor-pointer transition-colors select-none">
+                    <summary class="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-default cursor-pointer transition-colors select-none">
                         <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         Show answer
                     </summary>
-                     <div class="mt-3 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 animate-fade-in">
-                        <p class="text-sm font-medium text-zinc-900 dark:text-white">Answer: {{ q.answer }}</p>
+                    <div class="mt-3 p-4 rounded-lg surface-elevated border border-default animate-fade-in">
+                        <p class="text-sm font-medium text-default">Answer: {{ q.answer }}</p>
                         {% if q.explanation %}
                         <p class="text-sm text-muted mt-2">{{ q.explanation }}</p>
                         {% endif %}
@@ -76,13 +76,13 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col items-center justify-center py-20 px-6">
-        <div class="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-            <svg class="w-7 h-7 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    <div class="card flex flex-col items-center justify-center py-20 px-6">
+        <div class="w-14 h-14 rounded-xl surface-hover flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
         </div>
-        <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">No questions yet</p>
-        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Upload an XML document with MCQs to get started</p>
-        <a href="/upload/" class="mt-4 inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-sm">
+        <p class="text-sm font-medium text-default">No questions yet</p>
+        <p class="text-xs text-muted mt-1">Upload an XML document with MCQs to get started</p>
+        <a href="/upload/" class="btn btn-primary mt-4">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
             Upload XML
         </a>

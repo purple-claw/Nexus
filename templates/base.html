@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>{% block title %}Nexus{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -16,11 +16,9 @@
             primary: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',800:'#075985',900:'#0c4a6e',950:'#082f49' }
           },
           boxShadow: {
-            'card': '0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.3)',
-            'card-hover': '0 4px 12px rgba(0,0,0,0.4)',
-            'nav': '0 1px 3px rgba(0,0,0,0.5)',
-            'glow-sm': '0 0 8px rgba(56,189,248,0.15)',
-            'glow-md': '0 0 16px rgba(56,189,248,0.2)',
+            'card': '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.04)',
+            'card-hover': '0 8px 24px rgba(0,0,0,0.08)',
+            'panel': '0 4px 24px rgba(0,0,0,0.12)',
           }
         }
       }
@@ -37,21 +35,21 @@
   </script>
   {% block head %}{% endblock %}
 </head>
-<body class="antialiased">
-  <div x-data="{ sidebarOpen: false }" class="min-h-screen">
+<body class="antialiased min-h-screen">
+  <div x-data="{ sidebarOpen: false }" class="min-h-screen flex flex-col">
     {% if current_user.is_authenticated %}
     <div class="flex min-h-screen">
       {% include "components/sidebar.html" %}
-      <div class="flex-1 flex flex-col lg:ml-64">
+      <div class="flex-1 flex flex-col lg:ml-64 min-w-0">
         {% include "components/header.html" %}
-        <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto animate-page-in">
+        <main class="flex-1 page-container py-6 w-full max-w-7xl mx-auto page-enter">
           {{ self.content() }}
         </main>
       </div>
     </div>
     {% include "components/toast.html" %}
     {% else %}
-    <main class="min-h-screen px-4 animate-page-in">
+    <main class="flex-1 page-enter">
       {{ self.content() }}
     </main>
     {% endif %}
