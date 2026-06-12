@@ -80,7 +80,7 @@
         {% for block in readings %}
         <div class="px-6 py-5">
           {% if block.title %}<h3 class="text-sm font-semibold text-default mb-2">{{ block.title }}</h3>{% endif %}
-          <div class="prose prose-sm text-muted">{{ block.content|safe }}</div>
+          <div class="reading-content prose prose-sm prose-invert max-w-none text-default">{{ block.content | render_reading | safe }}</div>
         </div>
         {% endfor %}
       </div>

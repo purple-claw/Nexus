@@ -15,8 +15,8 @@
             </span>
             <h1 class="text-xl font-bold text-default mt-2">{{ title }}</h1>
         </div>
-        <div class="p-6 sm:p-8 prose prose-sm max-w-none text-default">
-            {{ content | replace('\n', '<br>') | safe }}
+        <div class="reading-content prose prose-sm prose-invert max-w-none text-default">
+            {{ content | render_reading | safe }}
         </div>
     </div>
 

@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from database import get_db
 from services.study_service import save_parsed_document
-from parser import parse_xml as parse_document
+from parser import parse_markdown as parse_document
 
 bp = Blueprint('upload', __name__, url_prefix='/upload')
 
@@ -10,22 +10,22 @@ bp = Blueprint('upload', __name__, url_prefix='/upload')
 @login_required
 def upload_page():
     if request.method == 'POST':
-        ajax = bool(request.form.get('xml_content'))
+        ajax = bool(request.form.get('md_content'))
 
         content = None
-        filename = 'document.xml'
+        filename = 'document.md'
 
         if 'file' in request.files and request.files['file'].filename:
             f = request.files['file']
             content = f.read().decode('utf-8')
             filename = f.filename
-        elif request.form.get('xml_content'):
-            content = request.form['xml_content']
+        elif request.form.get('md_content'):
+            content = request.form['md_content']
 
         if not content:
             if ajax:
-                return jsonify({"error": "No XML content provided"}), 400
-            flash('No XML content provided', 'error')
+                return jsonify({"error": "No content provided"}), 400
+            flash('No content provided', 'error')
             return render_template('upload.html')
 
         try:

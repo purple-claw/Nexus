@@ -42,7 +42,7 @@
                 {% for item in data.reading %}
                 <div class="card p-6 prose prose-sm max-w-none mb-4">
                     {% if item.title %}<h3 class="text-base font-semibold text-default mb-2">{{ item.title }}</h3>{% endif %}
-                    {{ item.content | replace('\n', '<br>') | safe }}
+                    <div class="reading-content">{{ item.content | render_reading | safe }}</div>
                 </div>
                 {% endfor %}
             </div>

@@ -6,6 +6,7 @@ from database import init_db, get_db, close_db
 from config import Config
 from routes.auth import bp as auth_bp, User as AuthUser
 from navigation import build_navigation
+from markdown_filter import render_reading_markdown
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -35,6 +36,8 @@ def create_app():
             db = get_db()
             topic_count = db.count('topics', user_id=current_user.id)
         return dict(today=today, navigation=nav, sidebar_topic_count=topic_count)
+
+    app.jinja_env.filters['render_reading'] = render_reading_markdown
 
     with app.app_context():
         init_db()
