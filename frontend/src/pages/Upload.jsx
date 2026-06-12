@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiUpload, FiFile, FiX, FiCheck, FiCode, FiEye } from 'react-icons/fi'
+import { FiUpload, FiFile, FiX, FiCheck, FiArrowRight } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import { useToast } from '../context/ToastContext'
@@ -10,9 +10,9 @@ export default function Upload() {
   const [content, setContent] = useState('')
   const [filename, setFilename] = useState('')
   const [loading, setLoading] = useState(false)
-  const [preview, setPreview] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef(null)
+  const textareaRef = useRef(null)
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -32,6 +32,19 @@ export default function Upload() {
       handleFile(file)
     } else {
       toast.error('Please upload a .md or .txt file')
+    }
+  }
+
+  const handleBrowse = () => fileRef.current?.click()
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.kind === 'file' && (item.type === 'text/markdown' || item.type === 'text/plain')) {
+        const file = item.getAsFile()
+        if (file) { handleFile(file); return }
+      }
     }
   }
 
@@ -67,35 +80,22 @@ export default function Upload() {
       >
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Upload</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Upload a markdown document or paste content directly
+          Paste markdown or drag a .md file — preview renders live beside it
         </p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Editor */}
+        {/* Left: Upload */}
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col gap-4"
         >
-          <div className="card overflow-hidden">
-            {/* Toolbar */}
+          <div className="card overflow-hidden flex flex-col flex-1">
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPreview(false)}
-                  className={`btn btn-sm ${!preview ? 'btn-primary' : 'btn-ghost'}`}
-                >
-                  <FiCode className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => setPreview(true)}
-                  className={`btn btn-sm ${preview ? 'btn-primary' : 'btn-ghost'}`}
-                >
-                  <FiEye className="w-4 h-4" />
-                  Preview
-                </button>
-              </div>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Upload Content
+              </span>
               {filename && (
                 <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
                   <FiFile className="w-3 h-3" />
@@ -104,128 +104,111 @@ export default function Upload() {
               )}
             </div>
 
-            {/* Drop zone / Textarea */}
-            {!content ? (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                className="flex flex-col items-center justify-center p-12 transition-colors cursor-pointer"
+            {/* Drop bar — always visible above textarea */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={handleBrowse}
+              className="flex items-center gap-3 px-4 py-3 mx-4 mt-4 rounded-xl cursor-pointer transition-colors"
+              style={{
+                background: dragOver ? 'var(--accent-light)' : 'var(--bg-elevated)',
+                border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+              }}
+            >
+              <FiUpload className="w-5 h-5 shrink-0" style={{ color: dragOver ? 'var(--accent)' : 'var(--text-tertiary)' }} />
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                Drop a <strong>.md</strong> or <strong>.txt</strong> file here
+              </span>
+              <span className="text-xs ml-auto" style={{ color: 'var(--text-tertiary)' }}>
+                or click to browse
+              </span>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".md,.txt"
+                onChange={(e) => handleFile(e.target.files[0])}
+                className="hidden"
+              />
+            </div>
+
+            {/* Textarea */}
+            <div className="flex-1 p-4">
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste}
+                className="w-full min-h-[320px] h-full p-4 font-mono text-sm resize-none rounded-xl border-0 outline-none"
                 style={{
-                  background: dragOver ? 'var(--accent-light)' : 'transparent',
-                  border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`,
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
                 }}
-                onClick={() => fileRef.current?.click()}
-              >
-                <FiUpload className="w-10 h-10 mb-3" style={{ color: dragOver ? 'var(--accent)' : 'var(--text-tertiary)' }} />
-                <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                  Drop your markdown file here
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  or click to browse (.md, .txt)
-                </p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".md,.txt"
-                  onChange={(e) => handleFile(e.target.files[0])}
-                  className="hidden"
-                />
-              </div>
-            ) : (
-              <div className="relative">
-                {preview ? (
-                  <div className="p-6 max-h-[70vh] overflow-y-auto">
-                    <MarkdownRenderer content={content} />
-                  </div>
-                ) : (
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="w-full min-h-[400px] p-4 font-mono text-sm resize-none border-0 outline-none"
-                    style={{
-                      background: 'var(--bg-card)',
-                      color: 'var(--text-primary)',
-                    }}
-                    placeholder="Paste your markdown content here..."
-                  />
-                )}
-                {content && (
+                placeholder="Paste your markdown content here...&#10;&#10;Or drag a .md file onto the bar above."
+              />
+            </div>
+
+            {/* Footer */}
+            {content && (
+              <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  {content.split('\n').length} lines
+                </span>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => { setContent(''); setFilename('') }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg transition-colors"
-                    style={{ color: 'var(--text-tertiary)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    className="btn btn-ghost btn-sm"
                   >
-                    <FiX className="w-4 h-4" />
+                    <FiX className="w-4 h-4" /> Clear
                   </button>
-                )}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="btn btn-primary btn-sm"
+                  >
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <><FiCheck className="w-4 h-4" /> Save Document</>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
-
-          {/* Submit */}
-          {content && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 flex justify-end"
-            >
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="btn btn-primary btn-lg"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <><FiCheck className="w-4 h-4" /> Save Document</>
-                )}
-              </button>
-            </motion.div>
-          )}
         </motion.div>
 
-        {/* Hint */}
+        {/* Right: Preview */}
         <motion.div
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="hidden lg:block"
+          className="flex flex-col gap-4"
         >
-          <div className="card p-6">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-              Markdown Format
-            </h3>
-            <div className="space-y-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)' }}>
-                <p className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Title</p>
-                <code className="font-mono"># Your Title</code>
-              </div>
-              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)' }}>
-                <p className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Metadata</p>
-                <pre className="font-mono">## Metadata
-- Category: Science
-- Subcategory: Physics
-- Description: ...</pre>
-              </div>
-              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)' }}>
-                <p className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>Content Sections</p>
-                <pre className="font-mono">## Content
-### Section Title
-Content with **bold**, ```mermaid```, etc.</pre>
-              </div>
-              <div className="p-3 rounded-lg" style={{ background: 'var(--bg-elevated)' }}>
-                <p className="font-medium mb-1" style={{ color: 'var(--text-primary)' }}>MCQs</p>
-                <pre className="font-mono">## MCQs
-**Q1:** Question?
-- A) Option A
-- B) Option B
-**Answer:** B
-**Difficulty:** easy
-**Explanation:** ...</pre>
-              </div>
+          <div className="card overflow-hidden flex flex-col flex-1">
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+              <FiArrowRight className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Preview
+              </span>
+              {!content && (
+                <span className="text-xs ml-auto" style={{ color: 'var(--text-tertiary)' }}>
+                  Content will appear here
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 p-6 overflow-y-auto min-h-[400px] max-h-[70vh]">
+              {content ? (
+                <MarkdownRenderer content={content} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <FiUpload className="w-10 h-10 mb-3" style={{ color: 'var(--text-tertiary)' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                    Add content on the left to see a live preview
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

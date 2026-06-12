@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiCheck, FiX, FiChevronDown } from 'react-icons/fi'
+import InlineMarkdown from './InlineMarkdown'
 
 const difficultyColors = {
   easy: { badge: 'badge-success', text: 'Easy' },
@@ -56,7 +57,7 @@ export default function MCQQuestion({ question, onAnswer, disabled }) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <h3 className="text-base font-medium leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-            {question.question}
+            <InlineMarkdown content={question.question} />
           </h3>
           <span className={`badge ${diff.badge} shrink-0 mt-0.5`}>{diff.text}</span>
         </div>
@@ -97,7 +98,7 @@ export default function MCQQuestion({ question, onAnswer, disabled }) {
                 }}>
                 {opt.key}
               </span>
-              <span className="flex-1">{opt.text}</span>
+              <span className="flex-1"><InlineMarkdown content={opt.text} /></span>
               {answered && opt.key === question.answer && (
                 <FiCheck className="w-5 h-5 text-green-500 shrink-0" />
               )}
@@ -136,7 +137,7 @@ export default function MCQQuestion({ question, onAnswer, disabled }) {
                     border: '1px solid var(--border)',
                   }}
                 >
-                  {question.explanation}
+                  <InlineMarkdown content={question.explanation} />
                 </motion.div>
               )}
             </AnimatePresence>

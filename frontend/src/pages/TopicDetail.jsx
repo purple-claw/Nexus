@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft,
-  FiTag, FiBarChart2, FiEdit2, FiCheck, FiX
+  FiTag, FiBarChart2, FiEdit2, FiCheck, FiX, FiTrash2
 } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -13,12 +13,14 @@ import LoadingSpinner from '../components/LoadingSpinner'
 
 export default function TopicDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('reading')
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const fetchTopic = async () => {
@@ -54,6 +56,18 @@ export default function TopicDetail() {
       toast.error('Failed to rename topic')
     }
     setEditing(false)
+  }
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true)
+      await client.delete(`/topics/${id}`)
+      toast.success('Topic deleted')
+      navigate('/library')
+    } catch {
+      toast.error('Failed to delete topic')
+      setDeleting(false)
+    }
   }
 
   const handleMCQAnswer = async (mcqId, isCorrect) => {
@@ -158,8 +172,22 @@ export default function TopicDetail() {
                   onClick={() => { setEditTitle(topic.title); setEditing(true) }}
                   className="p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ color: 'var(--text-tertiary)' }}
+                  title="Edit title"
                 >
                   <FiEdit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete "${topic.title}" and all its content?`)) {
+                      handleDelete()
+                    }
+                  }}
+                  disabled={deleting}
+                  className="p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  title="Delete topic"
+                >
+                  <FiTrash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
@@ -217,7 +245,7 @@ export default function TopicDetail() {
           className="space-y-4"
         >
           {reading_blocks.map((block, i) => (
-            <motion.div
+            <motion.article
               key={block.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -225,16 +253,16 @@ export default function TopicDetail() {
               className="card overflow-hidden"
             >
               {block.title && (
-                <div className="px-6 pt-6 pb-2">
+                <header className="px-6 pt-6 pb-2">
                   <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {block.title}
                   </h2>
-                </div>
+                </header>
               )}
               <div className="px-6 pb-6">
                 <MarkdownRenderer content={block.content} />
               </div>
-            </motion.div>
+            </motion.article>
           ))}
         </motion.div>
       )}
@@ -271,12 +299,14 @@ export default function TopicDetail() {
               transition={{ delay: i * 0.05 }}
               className="card p-5"
             >
-              <p className="text-sm font-semibold mb-2" style={{ color: 'var(--accent)' }}>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--accent)' }}>
                 {formula.title}
-              </p>
-              <div className="text-sm font-mono p-3 rounded-lg" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
-                {formula.content}
-              </div>
+              </h3>
+              <pre className="!mt-0 !mb-0 !rounded-lg !border-0" style={{ background: 'var(--bg-elevated)' }}>
+                <code className="text-sm font-mono" style={{ color: 'var(--text-primary)' }}>
+                  {formula.content}
+                </code>
+              </pre>
             </motion.div>
           ))}
         </motion.div>

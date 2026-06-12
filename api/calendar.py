@@ -34,17 +34,27 @@ def assign_content():
     data = request.get_json(silent=True) or {}
     db = get_db()
     topic_id = data.get('topic_id')
-    plan_date = data.get('date')
 
     try:
         topic_id = int(topic_id)
-        datetime.strptime(plan_date, '%Y-%m-%d')
     except (TypeError, ValueError):
-        return jsonify({"error": "A valid topic and YYYY-MM-DD date are required"}), 400
+        return jsonify({"error": "A valid topic ID is required"}), 400
 
     topic = db.get('topics', topic_id)
     if not topic or topic.get('user_id') != current_user.id:
         return jsonify({"error": "Topic not found"}), 404
+
+    plan_date = data.get('date')
+
+    # Clear date: remove all plans for this topic
+    if not plan_date:
+        db.delete_where('daily_plans', user_id=current_user.id, topic_id=topic_id)
+        return jsonify({"success": True, "cleared": True})
+
+    try:
+        datetime.strptime(plan_date, '%Y-%m-%d')
+    except (TypeError, ValueError):
+        return jsonify({"error": "A valid YYYY-MM-DD date is required"}), 400
 
     existing = db.find_one('daily_plans', user_id=current_user.id, plan_date=plan_date, topic_id=topic_id)
     if not existing:

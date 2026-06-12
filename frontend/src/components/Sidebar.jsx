@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FiHome, FiBook, FiGrid, FiFileText, FiHelpCircle,
   FiUpload, FiCalendar, FiList, FiChevronLeft, FiChevronRight,
-  FiX, FiTarget
+  FiX, FiTarget, FiMapPin
 } from 'react-icons/fi'
 import { useTheme } from '../context/ThemeContext'
 
 const navItems = [
   { to: '/', icon: FiHome, label: 'Dashboard' },
   { to: '/library', icon: FiBook, label: 'Library' },
+  { to: '/tracker', icon: FiMapPin, label: 'Topic Tracker' },
   { to: '/reading', icon: FiFileText, label: 'Reading' },
   { to: '/mcqs', icon: FiHelpCircle, label: 'MCQs' },
   { to: '/todos', icon: FiList, label: 'Todos' },

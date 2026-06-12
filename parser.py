@@ -23,17 +23,20 @@ def parse_markdown(content):
     section_buffer = []
     metadata_done = False
     order_idx = 0
+    in_code_block = False
 
     # Collect all h2-delimited sections
     sections = {} 
     current_h2 = None
 
     for line in lines:
-        if line.startswith('# '):
+        if line.startswith('```'):
+            in_code_block = not in_code_block
+        if line.startswith('# ') and not in_code_block:
             title = _clean(line[2:])
             if title:
                 result["metadata"]["title"] = title
-        elif line.startswith('## '):
+        elif line.startswith('## ') and not in_code_block:
             if current_h2 and section_buffer:
                 sections[current_h2] = '\n'.join(section_buffer).strip()
             current_h2 = _clean(line[3:]).lower().replace(' ', '_')
@@ -93,14 +96,19 @@ def parse_markdown(content):
     if formulas_text:
         for line in formulas_text.split('\n'):
             line = line.strip()
+            if not line:
+                continue
             m = re.match(r'\*\*(.+?):\*\*\s*(.+)', line)
             if m:
-                result["formulas"].append({
-                    "title": _clean(m.group(1)),
-                    "content": _clean(m.group(2)),
-                    "order_idx": order_idx
-                })
-                order_idx += 1
+                title = _clean(m.group(1))
+                content = _clean(m.group(2))
+                if title and content:
+                    result["formulas"].append({
+                        "title": title,
+                        "content": content,
+                        "order_idx": order_idx
+                    })
+                    order_idx += 1
 
     # Parse MCQs from ## MCQs section
     mcqs_text = sections.get('mcqs', '')
