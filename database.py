@@ -1,11 +1,15 @@
 import os
 from flask import g
 from config import Config
-from jsondb import JsonDB
 
 def get_db():
     if 'db' not in g:
-        g.db = JsonDB(Config.DATABASE)
+        if Config.DATABASE_URL:
+            from pgjsondb import PgJsonDB
+            g.db = PgJsonDB(Config.DATABASE_URL)
+        else:
+            from jsondb import JsonDB
+            g.db = JsonDB(Config.DATABASE)
     return g.db
 
 def close_db(e=None):

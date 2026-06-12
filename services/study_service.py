@@ -11,54 +11,59 @@ def parse_options(value):
 
 
 def dashboard_summary(db, user_id, today):
-    topics = db.find('topics', user_id=user_id)
-    categories = db.find('categories', user_id=user_id)
+    plans = db.find('daily_plans', user_id=user_id, plan_date=today)
 
-    mcq_ids = []
-    topic_ids = [t['id'] for t in topics]
+    topics = []
+    reading = []
     mcqs = []
-    for t in topics:
-        mcqs.extend(db.find('mcqs', topic_id=t['id']))
-    mcq_ids = [m['id'] for m in mcqs]
+    todos = []
 
-    pending_todos = 0
-    for t in topics:
-        pending_todos += db.count('todos', topic_id=t['id'], is_completed=0)
+    for plan in plans:
+        t = db.get('topics', plan.get('topic_id'))
+        if t:
+            cat = db.get('categories', t.get('category_id'))
+            topics.append({
+                'id': t['id'],
+                'title': t['title'],
+                'description': t.get('description', ''),
+                'category_name': cat['name'] if cat else '',
+            })
 
-    today_plans = db.count('daily_plans', user_id=user_id, plan_date=today)
+    topic_ids = [p['topic_id'] for p in plans if p.get('topic_id')]
 
-    attempts = 0
-    correct = 0
-    for m_id in mcq_ids:
-        p = db.find_one('progress', user_id=user_id, mcq_id=m_id)
+    for tid in topic_ids:
+        for r in db.find('reading_blocks', topic_id=tid):
+            reading.append(r)
+        for m in db.find('mcqs', topic_id=tid):
+            m_copy = dict(m)
+            m_copy['options'] = parse_options(m.get('options', '[]'))
+            mcqs.append(m_copy)
+        for td in db.find('todos', topic_id=tid):
+            todos.append(td)
+
+    pending_todos = sum(1 for t in todos if not t.get('is_completed'))
+
+    mcq_attempts = 0
+    mcq_correct = 0
+    for m in mcqs:
+        p = db.find_one('progress', user_id=user_id, mcq_id=m['id'])
         if p:
-            attempts += p.get('attempts', 0)
-            correct += p.get('correct_count', 0)
+            mcq_attempts += p.get('attempts', 0)
+            mcq_correct += p.get('correct_count', 0)
 
-    accuracy = round((correct / attempts) * 100) if attempts else None
+    accuracy = round((mcq_correct / mcq_attempts) * 100) if mcq_attempts else None
 
     stats = {
         'topic_count': len(topics),
-        'category_count': len(categories),
         'mcq_count': len(mcqs),
+        'reading_count': len(reading),
         'pending_todos': pending_todos,
-        'today_plans': today_plans,
-        'attempts': attempts,
-        'correct_count': correct,
+        'attempts': mcq_attempts,
+        'correct_count': mcq_correct,
         'accuracy': accuracy,
     }
 
-    recent = []
-    for t in sorted(topics, key=lambda x: x['id'], reverse=True)[:6]:
-        cat = db.get('categories', t.get('category_id'))
-        recent.append({
-            'id': t['id'],
-            'title': t['title'],
-            'description': t.get('description', ''),
-            'category_name': cat['name'] if cat else '',
-        })
-
-    return {'stats': stats, 'recent_topics': recent}
+    return {'stats': stats, 'topics': topics, 'reading': reading, 'mcqs': mcqs, 'todos': todos}
 
 
 def library_tree(db, user_id):

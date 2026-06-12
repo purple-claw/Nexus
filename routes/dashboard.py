@@ -12,4 +12,5 @@ def index():
     db = get_db()
     today = date.today().isoformat()
     summary = dashboard_summary(db, current_user.id, today)
-    return render_template('dashboard.html', stats=summary["stats"], recent_topics=summary["recent_topics"])
+    return render_template('dashboard.html', stats=summary["stats"], topics=summary["topics"],
+                           reading=summary["reading"], mcqs=summary["mcqs"], todos=summary["todos"])

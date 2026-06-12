@@ -1,9 +1,9 @@
 <a href="/topic/{{ topic.id }}/" class="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-black transition-colors group border border-transparent hover:border-zinc-800">
     <div class="flex items-center gap-3 min-w-0">
         <div class="w-7 h-7 rounded-md bg-zinc-800 flex items-center justify-center shrink-0 group-hover:bg-zinc-800 transition-colors">
-            <svg class="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-300 dark:group-hover:text-zinc-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        <span class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">{{ topic.title }}</span>
+        <span class="text-sm font-medium text-zinc-300 dark:text-zinc-300 group-hover:text-white transition-colors truncate">{{ topic.title }}</span>
     </div>
     <div class="flex items-center gap-2 shrink-0">
         {% if topic.mcq_count > 0 %}

@@ -9,17 +9,23 @@ bp = Blueprint('todos', __name__, url_prefix='/todos')
 def todos_list():
     db = get_db()
     topics = db.find('topics', user_id=current_user.id)
-    todos = []
+    groups = []
     for t in topics:
-        for td in db.find('todos', topic_id=t['id']):
-            td_copy = dict(td)
-            td_copy['topic_title'] = t['title']
-            todos.append(td_copy)
-    todos.sort(key=lambda x: (x.get('topic_title', ''), x.get('order_idx', 0)))
+        topic_todos = db.find('todos', topic_id=t['id'])
+        if topic_todos:
+            topic_todos.sort(key=lambda x: x.get('order_idx', 0))
+            groups.append({
+                'topic': t['title'],
+                'todos': topic_todos
+            })
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify(todos)
-    return render_template('todos/list.html', todos=todos)
+        all_todos = []
+        for g in groups:
+            for td in g['todos']:
+                all_todos.append(td)
+        return jsonify(all_todos)
+    return render_template('todos/list.html', groups=groups)
 
 @bp.route('/<int:todo_id>/toggle', methods=['POST'])
 @login_required
