@@ -16,7 +16,6 @@ import Upload from './pages/Upload'
 import Calendar from './pages/Calendar'
 import DailyView from './pages/DailyView'
 import Todos from './pages/Todos'
-import TopicTracker from './pages/TopicTracker'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -51,7 +50,6 @@ export default function App() {
         <Route path="daily" element={<DailyView />} />
         <Route path="daily/:date" element={<DailyView />} />
         <Route path="todos" element={<Todos />} />
-        <Route path="tracker" element={<TopicTracker />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

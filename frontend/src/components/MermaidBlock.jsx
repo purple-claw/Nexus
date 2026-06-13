@@ -171,7 +171,11 @@ export default function MermaidBlock({ chart, className = '' }) {
   }, [chart])
 
   if (error) {
-    return null
+    return (
+      <div className="my-4 p-4 rounded-xl text-sm" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-tertiary)' }}>
+        <span style={{ color: '#f43f5e' }}>Diagram render error: {error}</span>
+      </div>
+    )
   }
 
   return (

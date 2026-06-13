@@ -20,6 +20,39 @@ router.get('/reading', authMiddleware, async (req, res) => {
   res.json(result)
 })
 
+router.get('/reading/formulas', authMiddleware, async (req, res) => {
+  const topics = db.find('topics', { user_id: req.user.id })
+  const result = []
+  for (const t of topics) {
+    for (const f of db.find('formulas', { topic_id: t.id })) {
+      result.push({
+        id: f.id,
+        title: f.title || '',
+        content: f.content || '',
+        topic_title: t.title,
+        topic_id: t.id,
+      })
+    }
+  }
+  res.json(result)
+})
+
+router.get('/reading/notes', authMiddleware, async (req, res) => {
+  const topics = db.find('topics', { user_id: req.user.id })
+  const result = []
+  for (const t of topics) {
+    for (const n of db.find('notes', { topic_id: t.id })) {
+      result.push({
+        id: n.id,
+        content: n.content || '',
+        topic_title: t.title,
+        topic_id: t.id,
+      })
+    }
+  }
+  res.json(result)
+})
+
 router.get('/reading/:textId', authMiddleware, async (req, res) => {
   const textId = parseInt(req.params.textId)
   const rb = db.get('reading_blocks', textId)
