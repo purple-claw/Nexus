@@ -5,9 +5,17 @@ const { authMiddleware  } = require('../middleware/auth.js')
 const router = Router()
 
 router.get('/todos', authMiddleware, async (req, res) => {
-  const topics = db.find('topics', { user_id: req.user.id })
+  const today = new Date().toISOString().slice(0, 10)
+  const plans = db.find('daily_plans', { user_id: req.user.id, plan_date: today })
+  let topicIds = plans.map(p => p.topic_id).filter(Boolean)
+  if (topicIds.length === 0) {
+    const allTopics = db.find('topics', { user_id: req.user.id })
+    topicIds = allTopics.map(t => t.id)
+  }
   const groups = []
-  for (const t of topics) {
+  for (const tid of topicIds) {
+    const t = db.get('topics', tid)
+    if (!t) continue
     const topicTodos = db.find('todos', { topic_id: t.id })
     if (topicTodos.length > 0) {
       topicTodos.sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0))

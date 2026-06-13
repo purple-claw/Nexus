@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FiHome, FiBook, FiGrid, FiFileText, FiHelpCircle,
   FiUpload, FiCalendar, FiList, FiChevronLeft, FiChevronRight,
-  FiX, FiTarget
+  FiX, FiTarget, FiCode, FiBarChart2
 } from 'react-icons/fi'
 import { useTheme } from '../context/ThemeContext'
 
@@ -12,6 +12,9 @@ const navItems = [
   { to: '/', icon: FiHome, label: 'Dashboard' },
   { to: '/library', icon: FiBook, label: 'Library' },
   { to: '/reading', icon: FiFileText, label: 'Reading' },
+  { to: '/formulas', icon: FiBarChart2, label: 'Formulas' },
+  { to: '/notes', icon: FiFileText, label: 'Notes' },
+  { to: '/code', icon: FiCode, label: 'Code Snippets' },
   { to: '/mcqs', icon: FiHelpCircle, label: 'MCQs' },
   { to: '/todos', icon: FiList, label: 'Todos' },
   { to: '/calendar', icon: FiCalendar, label: 'Calendar' },

@@ -17,7 +17,7 @@ You are a technical curriculum writer. Generate a complete educational module on
   "reading_blocks": [
     {
       "title": "string — section heading (use Title Case)",
-      "content": "string — full markdown body. Rules: use ### for subheadings, **bold** for key terms, `code` for inline syntax, ```language for code blocks with correct language tag, ```mermaid for diagrams. Include 1-2 practical examples per block. Write conversationally — like a senior dev teaching a junior.",
+      "content": "string — full markdown body for reading content. Rules: use ### for subheadings, **bold** for key terms, `code` for inline syntax, ```language for code blocks with correct language tag. Include 1-2 practical examples per block. Write conversationally — like a senior dev teaching a junior. NO mermaid diagrams.",
       "order_idx": "number — position in sequence (0-based)"
     }
   ],
@@ -56,7 +56,7 @@ You are a technical curriculum writer. Generate a complete educational module on
 
 ## CONTENT RULES
 
-1. **Reading blocks:** Each block should teach one cohesive concept. Use mermaid diagrams for flows/architecture (```mermaid), code blocks with language tags (```python, ```bash, ```js), and real working examples. Include edge cases and common mistakes. Target 300-800 words per block.
+1. **Reading blocks:** Each block should teach one cohesive concept. Use code blocks with language tags (```python, ```bash, ```js, ```json) and real working examples. Include edge cases and common mistakes. Target 300-800 words per block. Write clean, flowing markdown without excessive code blocks interrupting the narrative.
 
 2. **Formulas:** Extract every syntax pattern or rule mentioned in the reading. One formula per distinct pattern. Use backticks for readability. Max one line per formula.
 
@@ -68,7 +68,9 @@ You are a technical curriculum writer. Generate a complete educational module on
 
 6. **Consistency:** The `order_idx` values must form a single global sequence across all content types — reading_blocks (0-19), formulas (20-39), notes (40-59), mcqs (60-89), todos (90-109). This ordering controls display in the UI.
 
-7. **Markdown:** Must be valid CommonMark. Code fence language tags are critical — use `python`, `bash`, `js`, `json`, `mermaid`, or omit for plain text. Wrap inline code in single backticks.
+7. **Markdown:** Must be valid CommonMark. Code fence language tags are critical — use `python`, `bash`, `js`, `json`, or omit for plain text. Wrap inline code in single backticks. Avoid mermaid diagrams.
+
+8. **Code extraction:** Code blocks with language tags and 3+ words of content will be automatically extracted to the Code Snippets section. Ensure code examples are complete and meaningful.
 
 ## OUTPUT FORMAT
 

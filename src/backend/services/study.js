@@ -185,7 +185,7 @@ async function topicDetail(db, userId, topicId) {
 
 async function dailyPlan(db, userId, planDate) {
   const plans = db.find('daily_plans', { user_id: userId, plan_date: planDate })
-  const result = { topics: [], reading: [], mcqs: [], todos: [] }
+  const result = { topics: [], reading: [], formulas: [], notes: [], mcqs: [], todos: [] }
 
   for (const plan of plans) {
     const t = db.get('topics', plan.topic_id)
@@ -197,6 +197,8 @@ async function dailyPlan(db, userId, planDate) {
 
   for (const tid of topicIds) {
     for (const r of db.find('reading_blocks', { topic_id: tid })) result.reading.push(r)
+    for (const f of db.find('formulas', { topic_id: tid })) result.formulas.push(f)
+    for (const n of db.find('notes', { topic_id: tid })) result.notes.push(n)
     for (const m of db.find('mcqs', { topic_id: tid })) {
       const mCopy = { ...m }
       mCopy.options = parseOptions(m.options || '[]')

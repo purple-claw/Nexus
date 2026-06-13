@@ -3,10 +3,44 @@ const db = require('../db.js')
 const { authMiddleware  } = require('../middleware/auth.js')
 const { listMcqs  } = require('../services/study.js')
 
+function parseOptions(value) {
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 const router = Router()
 
 router.get('/mcqs', authMiddleware, async (req, res) => {
-  const result = await listMcqs(db, req.user.id)
+  const today = new Date().toISOString().slice(0, 10)
+  const plans = db.find('daily_plans', { user_id: req.user.id, plan_date: today })
+  let topicIds = plans.map(p => p.topic_id).filter(Boolean)
+  if (topicIds.length === 0) {
+    const allTopics = db.find('topics', { user_id: req.user.id })
+    topicIds = allTopics.map(t => t.id)
+  }
+  const result = []
+  for (const tid of topicIds) {
+    const t = db.get('topics', tid)
+    if (!t) continue
+    for (const m of db.find('mcqs', { topic_id: t.id })) {
+      const p = db.findOne('progress', { user_id: req.user.id, mcq_id: m.id })
+      result.push({
+        id: m.id,
+        topic_title: t.title,
+        question: m.question,
+        options: parseOptions(m.options || '[]'),
+        answer: m.answer,
+        explanation: m.explanation || '',
+        difficulty: m.difficulty || 'medium',
+        attempts: p ? p.attempts || 0 : 0,
+        correct_count: p ? p.correct_count || 0 : 0,
+      })
+    }
+  }
   res.json(result)
 })
 
