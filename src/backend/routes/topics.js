@@ -56,23 +56,31 @@ router.put('/topics/:topicId', authMiddleware, async (req, res) => {
 })
 
 router.delete('/topics/:topicId', authMiddleware, async (req, res) => {
-  const topicId = parseInt(req.params.topicId)
-  const topic = db.findOne('topics', { id: topicId, user_id: req.user.id })
-  if (!topic) return res.status(404).json({ error: 'Topic not found' })
+  try {
+    const topicId = parseInt(req.params.topicId)
+    if (!Number.isFinite(topicId)) {
+      return res.status(400).json({ error: 'Invalid topic ID' })
+    }
+    const topic = db.findOne('topics', { id: topicId, user_id: req.user.id })
+    if (!topic) return res.status(404).json({ error: 'Topic not found' })
 
-  const mcqIds = db.find('mcqs', { topic_id: topicId }).map(m => m.id)
-  for (const mid of mcqIds) {
-    await db.deleteWhere('progress', { mcq_id: mid, user_id: req.user.id })
+    const mcqIds = db.find('mcqs', { topic_id: topicId }).map(m => m.id)
+    for (const mid of mcqIds) {
+      await db.deleteWhere('progress', { mcq_id: mid, user_id: req.user.id })
+    }
+    await db.deleteWhere('mcqs', { topic_id: topicId })
+    await db.deleteWhere('reading_blocks', { topic_id: topicId })
+    await db.deleteWhere('formulas', { topic_id: topicId })
+    await db.deleteWhere('notes', { topic_id: topicId })
+    await db.deleteWhere('todos', { topic_id: topicId })
+    await db.deleteWhere('daily_plans', { topic_id: topicId })
+    await db.delete('topics', topicId)
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Error deleting topic:', err)
+    res.status(500).json({ error: 'Failed to delete topic' })
   }
-  await db.deleteWhere('mcqs', { topic_id: topicId })
-  await db.deleteWhere('reading_blocks', { topic_id: topicId })
-  await db.deleteWhere('formulas', { topic_id: topicId })
-  await db.deleteWhere('notes', { topic_id: topicId })
-  await db.deleteWhere('todos', { topic_id: topicId })
-  await db.deleteWhere('daily_plans', { topic_id: topicId })
-  await db.delete('topics', topicId)
-
-  res.json({ success: true })
 })
 
 module.exports = router

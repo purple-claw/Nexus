@@ -1,125 +1,291 @@
-# Content Generation Prompt
+# Nexus Content Generation Prompt
 
-Use this prompt with an LLM (Claude, ChatGPT, etc.) to generate educational content that perfectly matches the Nexus app's database schema. The output JSON can be imported directly without errors.
+Generate educational content that imports directly into the Nexus learning app. Output must be raw markdown following the exact section format below — no JSON, no code fences around the output.
 
 ---
 
-You are a technical curriculum writer. Generate a complete educational module on **[TOPIC_NAME]** that follows the exact JSON schema below. The output must be valid JSON — no markdown wrappers, no explanatory text.
+You are a senior technical educator writing for the Nexus learning platform. Generate a complete module on **[TOPIC_NAME]**.
 
-## SCHEMA
-
-```json
-{
-  "topic": {
-    "title": "string — short, descriptive name",
-    "description": "string — 1-2 sentence overview"
-  },
-  "reading_blocks": [
-    {
-      "title": "string — section heading (use Title Case)",
-      "content": "string — full markdown body for reading content. Rules: use ### for subheadings, **bold** for key terms, `code` for inline syntax, ```language for code blocks with correct language tag. Include 1-2 practical examples per block. Write conversationally — like a senior dev teaching a junior. NO mermaid diagrams.",
-      "order_idx": "number — position in sequence (0-based)"
-    }
-  ],
-  "formulas": [
-    {
-      "title": "string — name of the formula/syntax rule",
-      "content": "string — the formula expression using backtick syntax. Use → for 'produces/returns', include a brief parenthetical explanation. Example: `\"a\" + \"b\"` → `\"ab\"` (requires both operands to be strings)",
-      "order_idx": "number"
-    }
-  ],
-  "notes": [
-    {
-      "content": "string — quick-reference tip or gotcha. Must use markdown with backtick formatting. Max 2 sentences. Example: `print()` displays output; use `sep` and `end` to control formatting.",
-      "order_idx": "number"
-    }
-  ],
-  "mcqs": [
-    {
-      "question": "string — short question ending with ?",
-      "options": "JSON string of array: [{\"key\":\"A\",\"text\":\"...\"},{\"key\":\"B\",\"text\":\"...\"},{\"key\":\"C\",\"text\":\"...\"},{\"key\":\"D\",\"text\":\"...\"}]",
-      "answer": "string — one of A|B|C|D",
-      "explanation": "string — explain why this answer is correct and the others are wrong. 1-3 sentences.",
-      "difficulty": "string — 'easy', 'medium', or 'hard'",
-      "order_idx": "number"
-    }
-  ],
-  "todos": [
-    {
-      "content": "string — actionable task. Start with a verb. Example: Install Python, VS Code, and Git; verify each with `--version` commands.",
-      "is_completed": 0,
-      "order_idx": "number"
-    }
-  ]
-}
-```
-
-## CONTENT RULES
-
-1. **Reading blocks:** Each block should teach one cohesive concept. Use code blocks with language tags (```python, ```bash, ```js, ```json) and real working examples. Include edge cases and common mistakes. Target 300-800 words per block. Write clean, flowing markdown without excessive code blocks interrupting the narrative.
-
-2. **Formulas:** Extract every syntax pattern or rule mentioned in the reading. One formula per distinct pattern. Use backticks for readability. Max one line per formula.
-
-3. **Notes:** Short-format tips, gotchas, or mnemonics that reinforce the reading. 1-2 sentences each. Use markdown.
-
-4. **MCQs:** Test understanding, not memorization. Distractors should be plausible wrong answers that reflect real misconceptions. Include one 'hard' difficulty MCQ per 3 'medium' ones.
-
-5. **Todos:** Convert each reading section into 2-4 actionable tasks. Ordered by learning sequence. Start every todo with a verb.
-
-6. **Consistency:** The `order_idx` values must form a single global sequence across all content types — reading_blocks (0-19), formulas (20-39), notes (40-59), mcqs (60-89), todos (90-109). This ordering controls display in the UI.
-
-7. **Markdown:** Must be valid CommonMark. Code fence language tags are critical — use `python`, `bash`, `js`, `json`, or omit for plain text. Wrap inline code in single backticks. Avoid mermaid diagrams.
-
-8. **Code extraction:** Code blocks with language tags and 3+ words of content will be automatically extracted to the Code Snippets section. Ensure code examples are complete and meaningful.
+Write in a conversational, mentor-like tone — like a senior dev teaching a junior. Be practical, opinionated, and specific. No fluff.
 
 ## OUTPUT FORMAT
 
-Return ONLY the JSON object. No explanation, no markdown code block wrappers around the JSON. The parser expects raw JSON starting with `{`.
+Return raw markdown (no code block wrappers). The structure must be:
 
-## EXAMPLE TOPIC (reference only)
+```
+# Topic Title
 
-```json
-{
-  "topic": {
-    "title": "Python Basics",
-    "description": "A complete starter guide to installing Python, VS Code, and Git, then mastering print, comments, variables, dynamic typing, input(), and string concatenation."
-  },
-  "reading_blocks": [
-    {
-      "title": "Set Up Your Development Environment",
-      "content": "Writing code without the right tools is like cooking without a stove...",
-      "order_idx": 0
-    }
-  ],
-  "formulas": [
-    {
-      "title": "String concatenation",
-      "content": "`\"a\" + \"b\"` → `\"ab\"` (requires both operands to be strings)",
-      "order_idx": 20
-    }
-  ],
-  "notes": [
-    {
-      "content": "`print()` displays output; use `sep` and `end` to control formatting.",
-      "order_idx": 40
-    }
-  ],
-  "mcqs": [
-    {
-      "question": "What does the `print()` function do?",
-      "options": "[{\"key\":\"A\",\"text\":\"Sends text to the printer\"},{\"key\":\"B\",\"text\":\"Displays output on the console\"},{\"key\":\"C\",\"text\":\"Returns a string value\"},{\"key\":\"D\",\"text\":\"Reads data from the keyboard\"}]",
-      "answer": "B",
-      "explanation": "`print()` writes to standard output (the console). It returns `None`, not a string. It doesn't interact with physical printers or input devices.",
-      "difficulty": "easy",
-      "order_idx": 60
-    }
-  ],
-  "todos": [
-    {
-      "content": "Install Python, VS Code, and Git; verify each with `--version` commands.",
-      "is_completed": 0,
-      "order_idx": 90
-    }
-  ]
-}
+## metadata
+- category: CategoryName
+- subcategory: SubCategoryName (optional — omit if not needed)
+- description: One or two sentences summarizing the module.
+
+## content
+### Section Title One
+(Markdown body — 200-500 words)
+
+### Section Title Two
+(Markdown body)
+
+### Section Title Three
+(Markdown body)
+
+## formulas
+**Rule Name:** `code pattern` → `result` (brief explanation)
+
+## mcqs
+**Q1:** Question text ending with ?
+- A) First option
+- B) Second option
+- C) Third option
+- D) Fourth option
+**Answer:** B
+**Difficulty:** medium
+**Explanation:** Why B is correct and others are wrong.
+
+**Q2:** Another question?
+- A) Option
+- B) Option
+- C) Option
+- D) Option
+**Answer:** A
+**Difficulty:** hard
+**Explanation:** Explanation text.
+
+## notes
+- Quick tip or gotcha using `backticks` for code references.
+- Another short insight max 2 sentences.
+
+## todos
+- [ ] Actionable task starting with a verb.
+- [ ] Another task.
+- [ ] Third task.
+```
+
+## SECTION RULES
+
+### `## metadata`
+- **category**: broad domain (e.g. "Python", "JavaScript", "DevOps", "SQL", "Git")
+- **subcategory**: narrower grouping within the category (e.g. "Basics", "Advanced", "Libraries"). Omit if the topic doesn't need sub-grouping.
+- **description**: 1-2 sentences. What the learner will master.
+
+### `## content` (reading blocks)
+- Split into 3-6 sections using `### ` (h3) headers. Each section teaches ONE cohesive concept.
+- Each section: 200-500 words. Start with a hook, explain the concept, show a real example, mention gotchas.
+- Use `**bold**` for key terms on first mention.
+- Use `` `backticks` `` for all code references (function names, variables, keywords, file paths, CLI commands).
+- Use fenced code blocks with language tags for examples: ` ```python `, ` ```bash `, ` ```js `, ` ```json `, ` ```sql `, etc.
+- Every code block must have a language tag. Code blocks with tags and 3+ words of content are auto-extracted to the Code Snippets page.
+- Include practical, runnable examples — not pseudocode.
+- Mention edge cases, common errors, and "gotcha" moments.
+- Use tables for comparisons, blockquotes for pro-tips, bullet lists for enumerations.
+- NO mermaid diagrams. NO HTML. NO inline styles.
+
+### `## formulas`
+One line per syntax pattern or rule. Format:
+
+```
+**Rule Name:** `input pattern` → `output result` (explanation)
+```
+
+Examples:
+- **String concatenation:** `"a" + "b"` → `"ab"` (both operands must be strings)
+- **F-string syntax:** `f"{var}"` → interpolated string (var must be defined)
+- **Slicing:** `list[1:3]` → elements at index 1 and 2 (end index is exclusive)
+
+Extract EVERY distinct syntax pattern from the reading. Be exhaustive. Use backticks around all code.
+
+### `## mcqs`
+- 5-8 questions. Mix difficulties: ~40% easy, ~40% medium, ~20% hard.
+- Test understanding and application, not rote memorization.
+- Distractors should reflect real common misconceptions.
+- Format is strict — the parser uses regex to extract fields:
+  - `**Q1:**` prefix (numbered sequentially, no gaps)
+  - Options: `- A) text` (exactly A/B/C/D, one per line)
+  - `**Answer:** X` (single letter)
+  - `**Difficulty:** easy|medium|hard`
+  - `**Explanation:** 1-3 sentences`
+
+### `## notes`
+- 4-8 bullet points. Each is a standalone tip, gotcha, or mnemonic.
+- Format: `- tip text with `backticks` for code`
+- Max 2 sentences per note. Short and memorable.
+- Reinforce the most important concepts from the reading.
+
+### `## todos`
+- 6-10 actionable tasks. Start every task with a verb.
+- Ordered by learning sequence (setup first, then practice).
+- Format: `- [ ] task description`
+- Be specific: "Install Python 3.12" not "Install Python"
+
+## WRITING STYLE
+
+- **Conversational**: "You'll hit this error if..." not "The user may encounter..."
+- **Opinionated**: "Always use triple-quoted strings for multiline" not "One approach is..."
+- **Specific**: Include version numbers, exact CLI commands, real function signatures.
+- **Structured**: Lead with the what/why, then the how. Each section has a clear takeaway.
+- **Honest about tradeoffs**: "This is faster but uses more memory" builds trust.
+
+## CRITICAL CONSTRAINTS
+
+1. Output starts with `# ` (h1). No preamble, no explanation before or after.
+2. Every `## ` section name must be exact: `metadata`, `content`, `formulas`, `mcqs`, `notes`, `todos`.
+3. Reading content is split by `### ` — each h3 becomes a separate reading block in the app.
+4. Code blocks MUST have language tags (```python, ```bash, etc.) to appear in Code Snippets.
+5. MCQ format is regex-parsed — deviate from the pattern and questions won't import.
+6. No mermaid, no HTML tags, no image links, no external URLs.
+
+## EXAMPLE
+
+```markdown
+# Python Strings and f-strings
+
+## metadata
+- category: Python
+- subcategory: Basics
+- description: Master string formatting in Python — from concatenation to f-strings, template strings, and formatting specifiers.
+
+## content
+### Why String Formatting Matters
+
+You'll format strings in almost every Python script you write. Whether you're building log messages, constructing API URLs, or printing user-facing output, how you combine text and variables matters.
+
+The old way — string concatenation with `+` — gets messy fast:
+
+```python
+name = "Alice"
+age = 30
+message = "Hello, " + name + ". You are " + str(age) + " years old."
+```
+
+This works but it's ugly, error-prone (forgetting `str()` causes `TypeError`), and hard to read. Python gives you better tools.
+
+### f-strings: The Modern Standard
+
+Introduced in Python 3.6, f-strings are the gold standard for string formatting. Prefix the string with `f` and embed expressions in curly braces:
+
+```python
+name = "Alice"
+age = 30
+message = f"Hello, {name}. You are {age} years old."
+```
+
+Clean, readable, and fast — f-strings are actually the **fastest** formatting method in Python. They evaluate expressions at runtime, so you can put any valid Python inside the braces:
+
+```python
+price = 19.99
+quantity = 3
+print(f"Total: ${price * quantity:.2f}")
+# Total: $59.97
+```
+
+The `:.2f` is a **format specifier** — it rounds to 2 decimal places. You can align text, pad with zeros, format percentages, and more.
+
+### Common Gotchas
+
+Two mistakes burn beginners regularly. First, forgetting that f-strings need Python 3.6+:
+
+```python
+# This fails on Python 3.5 or earlier
+message = f"Hello, {name}"
+```
+
+Second, using quotes inside the braces that match the outer quotes:
+
+```python
+# SyntaxError
+print(f"{"hello"}")
+# Correct
+print(f"{'hello'}")
+```
+
+Single quotes inside double-quoted f-strings (or vice versa) avoid this.
+
+## formulas
+**f-string basics:** `f"text {expr}"` → formatted string (expr is evaluated at runtime)
+**Format specifier:** `{value:.2f}` → float with 2 decimal places (works with any format spec)
+**Expression embedding:** `{func(x)}` → result of func(x) inlined (any valid Python expression)
+**Debugging prefix:** `f"{var=}"` → `"var=42"` (Python 3.8+ — prints name and value)
+**Padding:** `{text:>20}` → right-aligned in 20-char field (use `<` for left, `^` for center)
+
+## mcqs
+**Q1:** What prefix creates an f-string in Python?
+- A) `str`
+- B) `f`
+- C) `fmt`
+- D) `format`
+**Answer:** B
+**Difficulty:** easy
+**Explanation:** The `f` prefix (lowercase) before a string literal enables f-string formatting. `str` is a type constructor, `fmt` is not a Python keyword, and `format` is a string method.
+
+**Q2:** What happens here? `print(f"Result: {10 / 0}")`
+- A) Prints "Result: ZeroDivisionError"
+- B) Raises `ZeroDivisionError` at runtime
+- C) Prints "Result: inf"
+- D) SyntaxError at parse time
+**Answer:** B
+**Difficulty:** medium
+**Explanation:** f-string expressions are evaluated at runtime. Division by zero raises `ZeroDivisionError`. The error is NOT caught by the f-string — it propagates up. Python doesn't validate f-string expressions at parse time.
+
+**Q3:** Which format specifier pads a number with leading zeros to 5 digits?
+- A) `{n:05}`
+- B) `{n:5.0}`
+- C) `{n:z5}`
+- D) `{n:>05}`
+**Answer:** A
+**Difficulty:** medium
+**Explanation:** `05` means "pad with zeros to width 5". The `0` is the fill character and `5` is the minimum width. `>05` would right-align with zero-fill, which also works but is less direct.
+
+**Q4:** What is the output of `print(f"{3.14159:.1f}")`?
+- A) `3.14159`
+- B) `3.1`
+- C) `3.2`
+- D) `3.14`
+**Answer:** B
+**Difficulty:** easy
+**Explanation:** `.1f` formats to 1 decimal place. Python rounds 3.14159 to one decimal: 3.1. The `f` suffix means fixed-point notation.
+
+**Q5:** How do you include a literal curly brace in an f-string?
+- A) `\{` and `\}`
+- B) `{{` and `}}`
+- C) `{` and `}` with backslash
+- D) You can't — f-strings don't support literal braces
+**Answer:** B
+**Difficulty:** easy
+**Explanation:** Double curly braces `{{` and `}}` escape to literal `{` and `}` in f-strings. This is the only way — backslash escapes don't work inside f-string expressions.
+
+**Q6:** Why are f-strings faster than `.format()` and `%` formatting?
+- A) They're compiled to C at import time
+- B) They're evaluated at runtime using optimized bytecode
+- C) They use string interning automatically
+- D) They skip memory allocation
+**Answer:** B
+**Difficulty:** hard
+**Explanation:** f-strings are compiled directly to bytecode that builds the string at runtime, avoiding the overhead of `str.format()` method lookup and argument processing. They're not compiled to C — CPython's bytecode interpreter just handles them more efficiently.
+
+**Q7:** What does `f"{name=}"` output if `name` is `"Alice"`?
+- A) `Alice`
+- B) `name="Alice"`
+- C) `"name=Alice"`
+- D) SyntaxError
+**Answer:** B
+**Difficulty:** medium
+**Explanation:** The `=` specifier (Python 3.8+) is a debugging tool. It outputs `expression=value` — so `f"{name=}"` produces `name="Alice"` (with quotes around the string value).
+
+## notes
+- f-strings are the **fastest** string formatting method in Python — faster than `.format()` and `%` substitution.
+- Use `f"{var=}"` (Python 3.8+) for quick debugging — it prints `var=value` automatically.
+- Never mix quote types inside f-string braces: `f"{"text"}"` is a SyntaxError. Use `f"{'text'}"` instead.
+- Format specs follow the pattern: `{value:fill align width .precision type}` — e.g. `f"{3.14:06.2f}"` → `003.14`.
+- f-strings evaluate expressions at runtime — don't put expensive computation or side effects inside braces.
+
+## todos
+- [ ] Install Python 3.12+ and verify with `python3 --version` in your terminal.
+- [ ] Open a Python shell and try `f"Hello, {'World'}"` to see f-strings in action.
+- [ ] Create a variable `price = 29.99` and print `f"Price: ${price:.2f}"` with 2 decimal places.
+- [ ] Write a script that uses f-strings to format a receipt with item names, quantities, and totals.
+- [ ] Experiment with alignment: try `f"{'left':<20}"`, `f"{'center':^20}"`, and `f"{'right':>20}"`.
+- [ ] Use `f"{variable=}"` to debug-print 3 different variables and observe the output format.
+- [ ] Convert an old script that uses `%` formatting or `.format()` to use f-strings instead.
+- [ ] Try to break an f-string with mismatched quotes and understand the error message.
 ```

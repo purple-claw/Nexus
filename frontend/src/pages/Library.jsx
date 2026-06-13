@@ -290,8 +290,9 @@ export default function Library() {
         return next
       })
       toast.success('Topic deleted')
-    } catch {
-      toast.error('Failed to delete')
+    } catch (err) {
+      console.error('Delete failed:', err?.response?.data || err.message || err)
+      toast.error(err?.response?.data?.error || 'Failed to delete')
     }
     setDeleting(null)
   }
