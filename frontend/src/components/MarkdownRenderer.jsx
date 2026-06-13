@@ -220,6 +220,11 @@ const CodeBlock = memo(function CodeBlock({ language, value }) {
 
 const MD_COMPONENTS = {
   code({ node, inline, className, children, ...props }) {
+    const match = /language-(\w+)/.exec(className || '')
+    const language = match ? match[1] : ''
+    const value = Array.isArray(children)
+      ? children.map(child => (typeof child === 'string' ? child : '')).join('')
+      : typeof children === 'string' ? children : String(children ?? '')
     if (inline) {
       return (
         <code className="px-1.5 py-0.5 rounded text-[0.85em] font-mono"
@@ -228,12 +233,16 @@ const MD_COMPONENTS = {
         </code>
       )
     }
-    const match = /language-(\w+)/.exec(className || '')
-    const language = match ? match[1] : ''
-    const value = Array.isArray(children)
-      ? children.map(child => (typeof child === 'string' ? child : '')).join('')
-      : typeof children === 'string' ? children : String(children ?? '')
-    return <CodeBlock language={language} value={value.replace(/\n$/, '')} />
+    const trimmed = value.trim()
+    if (!language && trimmed.length < 60 && !trimmed.includes('\n')) {
+      return (
+        <code className="px-1.5 py-0.5 rounded text-[0.85em] font-mono"
+          style={{ background: 'var(--accent-light)', color: 'var(--accent)' }} {...props}>
+          {trimmed}
+        </code>
+      )
+    }
+    return <CodeBlock language={language} value={trimmed.replace(/\n$/, '')} />
   },
   h1: ({ children }) => (
     <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 pb-2"
