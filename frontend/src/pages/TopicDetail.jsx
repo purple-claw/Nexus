@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import {
   FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft,
   FiTag, FiBarChart2, FiEdit2, FiCheck, FiX, FiTrash2,
@@ -65,99 +63,47 @@ function ReadingBlockCard({ block, index }) {
 function FormulaCard({ formula, index }) {
   const [expanded, setExpanded] = useState(false)
   const lines = (formula.content || '').split('\n').length
-  const isLong = lines > 8
-
-  const formulaTheme = {
-    ...vscDarkPlus,
-    'pre[class*="language-"]': {
-      ...vscDarkPlus['pre[class*="language-"]'],
-      background: 'transparent',
-      padding: '0',
-      margin: '0',
-      border: 'none',
-      boxShadow: 'none',
-    },
-    'code[class*="language-"]': {
-      ...vscDarkPlus['code[class*="language-"]'],
-      background: 'transparent',
-      fontFamily: '"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace',
-      fontSize: '13px',
-      lineHeight: '1.7',
-    },
-  }
+  const isLong = lines > 2
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, ease: 'easeOut' }}
-      className="card overflow-hidden group"
+      variants={itemVariants}
+      layout
+      className="card overflow-hidden group transition-all duration-300"
     >
-      <div className="relative">
-        <div className="absolute inset-0 rounded-[1rem] bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
-        <div className="p-5 relative">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
+      <button
+        onClick={() => isLong && setExpanded(!expanded)}
+        className="w-full text-left"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 rounded-[1rem] bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+          <div className="p-4 sm:p-5 relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
                 <FiBarChart2 className="w-3.5 h-3.5 text-white" />
               </div>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
                 {formula.title || 'Formula'}
               </h3>
             </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
-              <CopyButton text={formula.content} />
-            </div>
-          </div>
-
-          <div
-            className={`relative rounded-xl overflow-hidden transition-all duration-300 ${
-              isLong ? 'cursor-pointer' : ''
-            }`}
-            style={{ background: '#1E1E1E', border: '1px solid rgba(255,255,255,0.06)' }}
-            onClick={() => isLong && setExpanded(!expanded)}
-          >
-            <div className={`transition-all duration-300 ${expanded || !isLong ? '' : 'max-h-48 overflow-hidden'}`}>
-              <div className="p-4">
-                <SyntaxHighlighter
-                  language="python"
-                  style={formulaTheme}
-                  showLineNumbers={lines > 3}
-                  wrapLines={false}
-                  lineNumberStyle={{
-                    color: '#858585',
-                    minWidth: '2.75em',
-                    paddingRight: '1.25em',
-                    userSelect: 'none',
-                    borderRight: '1px solid #404040',
-                    marginRight: '0.85em',
-                  }}
-                  customStyle={{ margin: 0, borderRadius: 0, background: 'transparent' }}
-                  codeTagProps={{ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word' } }}
-                >
-                  {formula.content}
-                </SyntaxHighlighter>
+            <div className={`transition-all duration-300 overflow-hidden ${expanded || !isLong ? '' : 'max-h-24'}`}>
+              <div className="text-sm leading-relaxed [&_.prose]:text-sm [&_.prose_p]:my-1 [&_.prose_p]:inline" style={{ color: 'var(--text-secondary)' }}>
+                <MarkdownRenderer content={formula.content} />
               </div>
               {!expanded && isLong && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-                  style={{ background: 'linear-gradient(transparent, #1E1E1E)' }}
-                />
+                <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none"
+                  style={{ background: 'linear-gradient(transparent, var(--glass-bg))' }} />
               )}
             </div>
-            {isLong && (
-              <div
-                className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors cursor-pointer border-t"
-                style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--text-tertiary)' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
-              >
-                {expanded ? <><FiChevronUp className="w-3.5 h-3.5" /> Show less</> : <><FiChevronDown className="w-3.5 h-3.5" /> Show all ({lines} lines)</>}
-              </div>
-            )}
           </div>
+          {isLong && (
+            <div className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors border-t"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-tertiary)' }}>
+              {expanded ? <><FiChevronUp className="w-3.5 h-3.5" /> Show less</> : <><FiChevronDown className="w-3.5 h-3.5" /> Show more</>}
+            </div>
+          )}
         </div>
-      </div>
+      </button>
     </motion.div>
   )
 }
@@ -497,11 +443,13 @@ export default function TopicDetail() {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid gap-4 sm:grid-cols-2"
+              className="space-y-3"
             >
-              {formulas.map((formula, i) => (
-                <FormulaCard key={formula.id || i} formula={formula} index={i} />
-              ))}
+              <AnimatePresence mode="popLayout">
+                {formulas.map((formula, i) => (
+                  <FormulaCard key={formula.id || i} formula={formula} index={i} />
+                ))}
+              </AnimatePresence>
             </motion.div>
           )}
 

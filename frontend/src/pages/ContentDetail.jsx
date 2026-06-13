@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import {
   FiChevronLeft, FiBarChart2, FiList, FiCopy, FiCheckCircle,
 } from 'react-icons/fi'
@@ -31,26 +29,6 @@ function CopyButton({ text }) {
       {copied ? 'Copied' : 'Copy'}
     </button>
   )
-}
-
-const formulaTheme = {
-  ...vscDarkPlus,
-  'pre[class*="language-"]': {
-    ...vscDarkPlus['pre[class*="language-"]'],
-    background: 'transparent',
-    padding: '0',
-    margin: '0',
-    border: 'none',
-    boxShadow: 'none',
-    borderRadius: 0,
-  },
-  'code[class*="language-"]': {
-    ...vscDarkPlus['code[class*="language-"]'],
-    background: 'transparent',
-    fontFamily: '"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace',
-    fontSize: '14px',
-    lineHeight: '1.7',
-  },
 }
 
 export default function ContentDetail() {
@@ -144,32 +122,18 @@ export default function ContentDetail() {
               <div className="absolute inset-0 rounded-[1rem] bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
               <div className="p-5 sm:p-8 relative">
                 <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
-                    {data.title || 'Formula'}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
+                      <FiBarChart2 className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h2 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
+                      {data.title || 'Formula'}
+                    </h2>
+                  </div>
                   <CopyButton text={data.content} />
                 </div>
-                <div className="rounded-xl overflow-hidden" style={{ background: '#1E1E1E', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="p-5">
-                    <SyntaxHighlighter
-                      language="python"
-                      style={formulaTheme}
-                      showLineNumbers={(data.content || '').split('\n').length > 3}
-                      wrapLines={false}
-                      lineNumberStyle={{
-                        color: '#858585',
-                        minWidth: '2.75em',
-                        paddingRight: '1.25em',
-                        userSelect: 'none',
-                        borderRight: '1px solid #404040',
-                        marginRight: '0.85em',
-                      }}
-                      customStyle={{ margin: 0, borderRadius: 0, background: 'transparent' }}
-                      codeTagProps={{ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word' } }}
-                    >
-                      {data.content}
-                    </SyntaxHighlighter>
-                  </div>
+                <div className="prose max-w-none text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  <MarkdownRenderer content={data.content} />
                 </div>
               </div>
             </div>

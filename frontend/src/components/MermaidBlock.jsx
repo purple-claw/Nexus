@@ -49,38 +49,21 @@ async function ensureMermaid() {
 function sanitizeMermaidCode(raw) {
   let chart = raw
     .replace(/```mermaid\s*/gi, '')
-    .replace(/```\s*/g, '')
+    .replace(/```\s*$/gm, '')
     .replace(/^[\s\n]+|[\s\n]+$/g, '')
     .trim()
   if (!chart) return ''
 
-  const lines = chart.split('\n').map(l => l.trimEnd())
-  const cleanedLines = []
-  for (let line of lines) {
-    if (!line.trim() || line.trim().startsWith('%%')) continue
-    line = line.replace(/[\u201C\u201D\u201E]/g, '').replace(/[\u2018\u2019\u201A]/g, '')
-    line = line.replace(/\[([^\]]*)\]/g, (_, label) => {
-      const clean = label.replace(/["'`]/g, '').replace(/[;:]/g, ' ').trim()
-      return `[${clean}]`
-    })
-    line = line.replace(/\{([^}]*)\}/g, (_, label) => {
-      if (line.trim().match(/^(graph|flowchart)\s/i)) return `{${label}}`
-      const clean = label.replace(/["'`]/g, '').replace(/[;:]/g, ' ').trim()
-      return `{${clean}}`
-    })
-    line = line.replace(/\(([^)]*)\)/g, (_, label) => {
-      const clean = label.replace(/["'`]/g, '').replace(/[;:]/g, ' ').trim()
-      return `(${clean})`
-    })
-    cleanedLines.push(line)
-  }
+  const lines = chart.split('\n')
+    .map(l => l.trimEnd())
+    .filter(l => l.trim() && !l.trim().startsWith('%%'))
 
-  chart = cleanedLines.join('\n')
-  const validStarts = ['graph', 'flowchart', 'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram', 'gantt', 'pie', 'gitgraph', 'mindmap', 'timeline']
-  const firstLine = cleanedLines[0]?.trim().toLowerCase() || ''
+  chart = lines.join('\n')
+  const validStarts = ['graph', 'flowchart', 'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram', 'gantt', 'pie', 'gitgraph', 'mindmap', 'timeline', 'block', 'quadrant', 'xy', 'xychart', 'sankey', 'journey', 'requirement', 'git', 'c4', 'info']
+  const firstLine = lines[0]?.trim().toLowerCase() || ''
   const hasValidStart = validStarts.some(s => firstLine.startsWith(s))
   if (!hasValidStart) {
-    if (chart.includes('-->') || chart.includes('---') || chart.includes('-.->')) {
+    if (chart.includes('-->') || chart.includes('---') || chart.includes('-.->') || chart.includes('==>')) {
       chart = 'graph TD\n' + chart
     } else {
       return ''
