@@ -18,12 +18,14 @@ const FILTERS = [
 
 function extractCodeSnippets(content) {
   const snippets = []
-  const regex = /```(\w*)\n([\s\S]*?)```/g
+  const regex = /```(\w+)\n([\s\S]*?)```/g
   let match
   while ((match = regex.exec(content)) !== null) {
+    const code = match[2].trim()
+    if (code.split(/\s+/).length < 3) continue
     snippets.push({
-      language: match[1] || 'text',
-      code: match[2].trim(),
+      language: match[1],
+      code,
     })
   }
   return snippets
