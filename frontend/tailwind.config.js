@@ -23,8 +23,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
+        sans: ['"Source Sans 3"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"Source Code Pro"', 'ui-monospace', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

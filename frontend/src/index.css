@@ -358,20 +358,17 @@
     box-shadow: 0 0 24px var(--accent-glow);
   }
 
-  .mermaid-wrapper {
-    background: var(--bg-elevated);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: center;
-    overflow-x: auto;
-    margin: 1rem 0;
+  .code-block-wrapper {
+    position: relative;
   }
 
-  .mermaid-wrapper svg {
-    max-width: 100%;
+  .code-block-wrapper:hover .code-copy-btn {
+    opacity: 1;
+  }
+
+  .code-copy-btn {
+    opacity: 0;
+    transition: opacity 0.15s ease;
   }
 }
 

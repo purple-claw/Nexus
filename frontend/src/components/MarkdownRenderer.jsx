@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -6,13 +6,10 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
-import MermaidBlock from './MermaidBlock'
 import { FiCopy, FiCheck, FiCode, FiChevronDown, FiChevronUp } from 'react-icons/fi'
 
-const PROGRESSIVE_THRESHOLD = 60000
 const LARGE_CODE_LINES = 400
 const CODE_PREVIEW_LINES = 50
-
 const MATH_LANGUAGES = new Set(['math', 'latex', 'tex', 'katex'])
 
 function normalizeMathSource(source) {
@@ -78,11 +75,7 @@ function preprocessMathDelimiters(content) {
 
 function renderKatexHtml(value, displayMode) {
   try {
-    try {
-      return katex.renderToString(value, { displayMode, throwOnError: true, strict: 'ignore' })
-    } catch {
-      return katex.renderToString(value, { displayMode, throwOnError: false, strict: 'ignore' })
-    }
+    return katex.renderToString(value, { displayMode, throwOnError: false, strict: 'ignore' })
   } catch {
     return ''
   }
@@ -93,7 +86,6 @@ function prefersDisplayMath(src) {
   if (!s) return false
   if (s.includes('\n') || /\\begin\{/.test(s) || s.includes('&') || s.includes('\\displaystyle')) return true
   if (/\\(int|sum|prod|lim|frac|partial|nabla)/.test(s)) return true
-  if (/\\frac\s*\{\s*d|d\/d|\\partial/.test(s)) return true
   if (s.length > 120) return true
   return false
 }
@@ -117,75 +109,28 @@ const vscodeTheme = {
   ...vscDarkPlus,
   'pre[class*="language-"]': {
     ...vscDarkPlus['pre[class*="language-"]'],
-    background: '#1E1E1E', borderRadius: '0', padding: '16px', margin: '0', border: 'none', boxShadow: 'none',
+    background: 'transparent', padding: '0', margin: '0', border: 'none', boxShadow: 'none', borderRadius: '0',
   },
   'code[class*="language-"]': {
     ...vscDarkPlus['code[class*="language-"]'],
     background: 'transparent',
-    fontFamily: '"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace',
+    fontFamily: '"Source Code Pro","JetBrains Mono","Fira Code",Consolas,monospace',
     fontSize: '13px', lineHeight: '1.6', textShadow: 'none',
   },
-  comment: { color: '#6A9955', fontStyle: 'italic' },
-  prolog: { color: '#6A9955' }, doctype: { color: '#6A9955' }, cdata: { color: '#6A9955' },
-  punctuation: { color: '#D4D4D4' }, property: { color: '#9CDCFE' }, tag: { color: '#569CD6' },
-  boolean: { color: '#569CD6' }, number: { color: '#B5CEA8' }, constant: { color: '#4FC1FF' },
-  symbol: { color: '#B5CEA8' }, deleted: { color: '#CE9178' }, selector: { color: '#D7BA7D' },
-  'attr-name': { color: '#9CDCFE' }, string: { color: '#CE9178' }, char: { color: '#CE9178' },
-  builtin: { color: '#4EC9B0' }, inserted: { color: '#B5CEA8' }, operator: { color: '#D4D4D4' },
-  entity: { color: '#4EC9B0', cursor: 'help' }, url: { color: '#4EC9B0' }, variable: { color: '#9CDCFE' },
-  atrule: { color: '#C586C0' }, 'attr-value': { color: '#CE9178' }, function: { color: '#DCDCAA' },
-  'class-name': { color: '#4EC9B0' }, keyword: { color: '#C586C0' }, regex: { color: '#D16969' },
-  important: { color: '#569CD6', fontWeight: 'bold' },
 }
 
 const MathInline = memo(function MathInline({ value }) {
   const html = renderKatexHtml(value, false)
-  if (!html) return <span className="math-inline" style={{ color: 'var(--text-secondary)' }}>{value}</span>
+  if (!html) return <code style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{value}</code>
   return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />
 })
 
 const MathBlock = memo(function MathBlock({ value }) {
   const useDisplay = prefersDisplayMath(value)
   const html = renderKatexHtml(value, useDisplay)
-  if (!html) {
-    return <pre className="my-2 whitespace-pre-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>{value}</pre>
-  }
-  if (useDisplay) {
-    return <div className="math-display-wrapper my-4" dangerouslySetInnerHTML={{ __html: html }} />
-  }
+  if (!html) return <pre className="my-2 whitespace-pre-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>{value}</pre>
+  if (useDisplay) return <div className="my-4 flex justify-center" dangerouslySetInnerHTML={{ __html: html }} />
   return <span className="math-inline" dangerouslySetInnerHTML={{ __html: html }} />
-})
-
-const LazyHighlighter = memo(function LazyHighlighter({ language, value, lineCount }) {
-  const [highlighted, setHighlighted] = useState(false)
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setHighlighted(true))
-    return () => cancelAnimationFrame(id)
-  }, [value, language])
-  if (!highlighted) {
-    return (
-      <pre className="m-0 p-4 text-[13px] leading-[1.6] font-mono overflow-auto whitespace-pre"
-        style={{ background: '#1E1E1E', color: '#D4D4D4' }}>
-        {value}
-      </pre>
-    )
-  }
-  return (
-    <SyntaxHighlighter
-      language={language || 'text'}
-      style={vscodeTheme}
-      showLineNumbers={lineCount > 3}
-      wrapLines={false}
-      lineNumberStyle={{
-        color: '#858585', minWidth: '2.75em', paddingRight: '1.25em',
-        userSelect: 'none', borderRight: '1px solid #404040', marginRight: '0.85em',
-      }}
-      customStyle={{ margin: 0, borderRadius: 0, background: '#1E1E1E', width: 'max-content', minWidth: '100%' }}
-      codeTagProps={{ style: { whiteSpace: 'pre' } }}
-    >
-      {value}
-    </SyntaxHighlighter>
-  )
 })
 
 const CodeBlock = memo(function CodeBlock({ language, value }) {
@@ -199,52 +144,74 @@ const CodeBlock = memo(function CodeBlock({ language, value }) {
     setTimeout(() => setCopied(false), 2000)
   }, [value])
 
-  if (language === 'mermaid') return <MermaidBlock chart={value} />
-
   if (MATH_LANGUAGES.has(normalizedLanguage)) return <MathBlock value={normalizeMathSource(value)} />
 
-  const displayLanguage = languageLabels[language?.toLowerCase()] ?? language?.toUpperCase() ?? 'TEXT'
+  const displayLanguage = languageLabels[language?.toLowerCase()] ?? language?.toUpperCase() ?? ''
   const lines = value.split('\n')
   const lineCount = lines.length
   const isLarge = lineCount > LARGE_CODE_LINES
   const displayValue = isLarge && !expanded ? lines.slice(0, CODE_PREVIEW_LINES).join('\n') : value
 
   return (
-    <div className="relative my-4 min-w-0 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#252526' }}>
-        <div className="flex min-w-0 items-center gap-2">
-          <FiCode size={14} className="shrink-0" style={{ color: 'var(--accent)' }} />
-          <span className="truncate text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{displayLanguage}</span>
+    <div className="relative my-4 min-w-0 rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', background: '#0d1117' }}>
+      {displayLanguage && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#161b22' }}>
+          <div className="flex min-w-0 items-center gap-2">
+            <FiCode size={13} className="shrink-0" style={{ color: 'var(--accent)' }} />
+            <span className="truncate text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{displayLanguage}</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="hidden text-[10px] sm:inline" style={{ color: 'var(--text-tertiary)' }}>
+              {lineCount} {lineCount === 1 ? 'line' : 'lines'}
+            </span>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-[11px] transition-colors"
+              style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+            >
+              {copied ? <FiCheck size={11} style={{ color: '#22c55e' }} /> : <FiCopy size={11} />}
+              <span className="ml-1">{copied ? 'Copied!' : 'Copy'}</span>
+            </button>
+          </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="hidden text-[10px] sm:inline" style={{ color: 'var(--text-tertiary)' }}>
-            {lineCount} {lineCount === 1 ? 'line' : 'lines'}
-          </span>
+      )}
+      {!displayLanguage && (
+        <div className="absolute top-2 right-2 z-10">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            className="flex items-center gap-1.5 rounded px-2 py-1 text-[11px] transition-colors opacity-0 group-hover/code:opacity-100"
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-tertiary)' }}
           >
-            {copied ? <FiCheck size={12} style={{ color: '#22c55e' }} /> : <FiCopy size={12} />}
-            <span className="ml-1">{copied ? 'Copied!' : 'Copy'}</span>
+            {copied ? <FiCheck size={11} style={{ color: '#22c55e' }} /> : <FiCopy size={11} />}
           </button>
         </div>
-      </div>
-      <div className="overflow-auto max-h-[55dvh] sm:max-h-[62dvh]" style={{ scrollbarWidth: 'thin' }}>
-        <LazyHighlighter language={language} value={displayValue} lineCount={lineCount} />
+      )}
+      <div className="overflow-auto max-h-[60dvh]" style={{ scrollbarWidth: 'thin' }}>
+        <SyntaxHighlighter
+          language={language || 'text'}
+          style={vscodeTheme}
+          showLineNumbers={lineCount > 3}
+          wrapLines={false}
+          lineNumberStyle={{
+            color: '#484f58', minWidth: '2.5em', paddingRight: '1em',
+            userSelect: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', marginRight: '0.85em',
+          }}
+          customStyle={{ margin: 0, borderRadius: 0, background: 'transparent', padding: '16px', width: 'max-content', minWidth: '100%' }}
+          codeTagProps={{ style: { whiteSpace: 'pre' } }}
+        >
+          {displayValue}
+        </SyntaxHighlighter>
       </div>
       {isLarge && (
         <button
           onClick={() => setExpanded(v => !v)}
-          className="flex w-full items-center justify-center gap-1.5 py-2 text-xs transition-colors"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: '#1E1E1E', color: 'var(--text-tertiary)' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+          className="flex w-full items-center justify-center gap-1.5 py-2 text-[11px] font-medium transition-colors"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: '#161b22', color: 'var(--text-tertiary)' }}
         >
-          {expanded ? <><FiChevronUp size={13} /> Collapse</> : <><FiChevronDown size={13} /> Show all {lineCount} lines</>}
+          {expanded ? <><FiChevronUp size={12} /> Collapse</> : <><FiChevronDown size={12} /> Show all {lineCount} lines</>}
         </button>
       )}
     </div>
@@ -255,7 +222,7 @@ const MD_COMPONENTS = {
   code({ node, inline, className, children, ...props }) {
     if (inline) {
       return (
-        <code className="px-1.5 py-0.5 rounded text-[0.82em] font-mono"
+        <code className="px-1.5 py-0.5 rounded text-[0.85em] font-mono"
           style={{ background: 'var(--accent-light)', color: 'var(--accent)' }} {...props}>
           {children}
         </code>
@@ -268,27 +235,48 @@ const MD_COMPONENTS = {
       : typeof children === 'string' ? children : String(children ?? '')
     return <CodeBlock language={language} value={value.replace(/\n$/, '')} />
   },
-  h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 pb-2" style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}>{children}</h1>,
-  h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-5 first:mt-0" style={{ color: 'var(--text-primary)' }}>{children}</h2>,
-  h3: ({ children }) => <h3 className="text-lg font-semibold mb-2 mt-4 first:mt-0" style={{ color: 'var(--text-primary)' }}>{children}</h3>,
-  h4: ({ children }) => <h4 className="text-base font-semibold mb-2 mt-3 first:mt-0" style={{ color: 'var(--text-primary)' }}>{children}</h4>,
-  p: ({ children }) => <p className="leading-relaxed mb-4 last:mb-0" style={{ color: 'var(--text-secondary)' }}>{children}</p>,
+  h1: ({ children }) => (
+    <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 pb-2"
+      style={{ color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}>{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-xl font-semibold mb-3 mt-5 first:mt-0"
+      style={{ color: 'var(--text-primary)' }}>{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-lg font-semibold mb-2 mt-4 first:mt-0"
+      style={{ color: 'var(--text-primary)' }}>{children}</h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="text-base font-semibold mb-2 mt-3 first:mt-0"
+      style={{ color: 'var(--text-primary)' }}>{children}</h4>
+  ),
+  p: ({ children }) => (
+    <p className="leading-[1.8] mb-3 last:mb-0"
+      style={{ color: 'var(--text-secondary)' }}>{children}</p>
+  ),
   a: ({ href, children }) => (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      className="underline underline-offset-2 transition-colors"
-      style={{ color: 'var(--accent)' }}
-      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--accent)'}>
-      {children}
-    </a>
+      className="underline underline-offset-2 decoration-1 transition-colors hover:decoration-2"
+      style={{ color: 'var(--accent)' }}>{children}</a>
   ),
-  ul: ({ children }) => <ul className="mb-4 list-disc list-outside space-y-1.5 pl-5 last:mb-0" style={{ color: 'var(--text-secondary)' }}>{children}</ul>,
-  ol: ({ children }) => <ol className="mb-4 list-decimal list-outside space-y-1.5 pl-5 last:mb-0" style={{ color: 'var(--text-secondary)' }}>{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{children}</li>,
+  ul: ({ children }) => (
+    <ul className="mb-3 space-y-1 pl-5 last:mb-0" style={{ color: 'var(--text-secondary)' }}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-3 space-y-1 pl-5 list-decimal last:mb-0" style={{ color: 'var(--text-secondary)' }}>
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="leading-[1.8]" style={{ color: 'var(--text-secondary)' }}>{children}</li>
+  ),
   blockquote: ({ children }) => (
-    <blockquote className="pl-4 py-0.5 my-4 rounded-r-lg"
-      style={{ borderLeft: '4px solid var(--accent)', background: 'var(--accent-light)' }}>
-      <div className="italic" style={{ color: 'var(--text-secondary)' }}>{children}</div>
+    <blockquote className="pl-4 my-4 rounded-r-lg"
+      style={{ borderLeft: '3px solid var(--accent)', background: 'var(--accent-light)' }}>
+      <div style={{ color: 'var(--text-secondary)' }}>{children}</div>
     </blockquote>
   ),
   table: ({ children }) => (
@@ -296,21 +284,45 @@ const MD_COMPONENTS = {
       <table className="w-full min-w-max text-sm">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead style={{ background: 'var(--bg-elevated)' }}>{children}</thead>,
-  tbody: ({ children }) => <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>{children}</tbody>,
-  tr: ({ children }) => <tr className="transition-colors" style={{ hover: { background: 'var(--bg-hover)' } }}>{children}</tr>,
-  th: ({ children }) => <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>{children}</th>,
-  td: ({ children }) => <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{children}</td>,
-  hr: () => <hr className="border-0 h-px my-6" style={{ background: 'linear-gradient(to right, transparent, var(--border), transparent)' }} />,
+  thead: ({ children }) => (
+    <thead style={{ background: 'var(--bg-elevated)' }}>{children}</thead>
+  ),
+  tbody: ({ children }) => (
+    <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>{children}</tbody>
+  ),
+  tr: ({ children }) => (
+    <tr className="transition-colors hover:bg-[var(--bg-hover)]">{children}</tr>
+  ),
+  th: ({ children }) => (
+    <th className="px-4 py-2.5 text-left font-semibold text-xs uppercase tracking-wider"
+      style={{ color: 'var(--text-tertiary)' }}>{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>{children}</td>
+  ),
+  hr: () => (
+    <hr className="border-0 h-px my-6"
+      style={{ background: 'linear-gradient(to right, transparent, var(--border), transparent)' }} />
+  ),
   img: ({ src, alt }) => (
     <figure className="my-4">
-      <img src={src} alt={alt} loading="lazy" decoding="async" className="rounded-xl max-w-full h-auto" style={{ border: '1px solid var(--border)' }} />
-      {alt && <figcaption className="text-center text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>{alt}</figcaption>}
+      <img src={src} alt={alt} loading="lazy" decoding="async"
+        className="rounded-xl max-w-full h-auto" />
+      {alt && (
+        <figcaption className="text-center text-xs mt-2"
+          style={{ color: 'var(--text-tertiary)' }}>{alt}</figcaption>
+      )}
     </figure>
   ),
-  del: ({ children }) => <del className="line-through" style={{ color: 'var(--text-tertiary)' }}>{children}</del>,
-  strong: ({ children }) => <strong className="font-semibold" style={{ color: 'var(--text-primary)' }}>{children}</strong>,
-  em: ({ children }) => <em className="italic" style={{ color: 'var(--text-primary)' }}>{children}</em>,
+  del: ({ children }) => (
+    <del className="line-through" style={{ color: 'var(--text-tertiary)' }}>{children}</del>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold" style={{ color: 'var(--text-primary)' }}>{children}</strong>
+  ),
+  em: ({ children }) => (
+    <em className="italic" style={{ color: 'var(--text-primary)' }}>{children}</em>
+  ),
   inlineMath: ({ value }) => value ? <MathInline value={value} /> : null,
   math: ({ value }) => value ? <MathBlock value={value} /> : null,
 }
@@ -322,14 +334,17 @@ function splitContent(text, maxChunkSize) {
   let remaining = text
   while (remaining.length > maxChunkSize) {
     const searchArea = remaining.slice(0, maxChunkSize)
-    let headMatch = searchArea.search(/\n(?=#{1,3} )/)
-    let splitAt = headMatch > maxChunkSize / 3 ? headMatch : -1
+    const headMatch = searchArea.search(/\n(?=#{1,3} )/)
+    const splitAt = headMatch > maxChunkSize / 3 ? headMatch : -1
     if (splitAt < 0) {
       const paraIdx = remaining.lastIndexOf('\n\n', maxChunkSize)
-      splitAt = paraIdx > 0 ? paraIdx + 2 : maxChunkSize
+      const pos = paraIdx > 0 ? paraIdx + 2 : maxChunkSize
+      chunks.push(remaining.slice(0, pos))
+      remaining = remaining.slice(pos)
+    } else {
+      chunks.push(remaining.slice(0, splitAt))
+      remaining = remaining.slice(splitAt)
     }
-    chunks.push(remaining.slice(0, splitAt))
-    remaining = remaining.slice(splitAt)
   }
   if (remaining) chunks.push(remaining)
   return chunks
@@ -337,7 +352,11 @@ function splitContent(text, maxChunkSize) {
 
 const MarkdownChunk = memo(function MarkdownChunk({ content }) {
   const preprocessed = preprocessMathDelimiters(content)
-  return <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={MD_COMPONENTS}>{preprocessed}</ReactMarkdown>
+  return (
+    <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={MD_COMPONENTS}>
+      {preprocessed}
+    </ReactMarkdown>
+  )
 }, (prev, next) => prev.content === next.content)
 
 const ProgressiveMarkdown = memo(function ProgressiveMarkdown({ chunks }) {
@@ -368,7 +387,7 @@ const ProgressiveMarkdown = memo(function ProgressiveMarkdown({ chunks }) {
 export default memo(function MarkdownRenderer({ content, className = '' }) {
   const deferredContent = useDeferredValue(content)
   const isPending = deferredContent !== content
-  const isProgressive = deferredContent.length > PROGRESSIVE_THRESHOLD
+  const isProgressive = deferredContent.length > 60000
 
   const chunks = useMemo(() => {
     if (!isProgressive) return null
