@@ -11,8 +11,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 const FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'reading', label: 'Reading', icon: FiFileText },
-  { id: 'formulas', label: 'Formulas', icon: FiBarChart2 },
-  { id: 'notes', label: 'Notes', icon: FiList },
+  { id: 'formula', label: 'Formulas', icon: FiBarChart2 },
+  { id: 'note', label: 'Notes', icon: FiList },
   { id: 'code', label: 'Code', icon: FiCode },
 ]
 
@@ -99,19 +99,18 @@ export default function ReadingList() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [rRes, fRes, nRes] = await Promise.all([
-          client.get('/reading'),
-          client.get('/reading/formulas'),
-          client.get('/reading/notes'),
-        ])
-        setReadings(rRes.data || [])
-        setFormulas(fRes.data || [])
-        setNotes(nRes.data || [])
-      } catch (err) {
-        console.error('Failed to load reading content', err)
-      } finally {
-        setLoading(false)
-      }
+        const rRes = await client.get('/reading').catch(() => null)
+        setReadings(rRes?.data || [])
+      } catch {}
+      try {
+        const fRes = await client.get('/reading/formulas').catch(() => null)
+        setFormulas(fRes?.data || [])
+      } catch {}
+      try {
+        const nRes = await client.get('/reading/notes').catch(() => null)
+        setNotes(nRes?.data || [])
+      } catch {}
+      setLoading(false)
     }
     fetchAll()
   }, [])
