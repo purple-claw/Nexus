@@ -374,20 +374,6 @@ body {
   margin: 2rem 0;
 }
 
-.reading-content .mermaid-wrapper {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  display: flex;
-  justify-content: center;
-  overflow-x: auto;
-}
-
-.reading-content .mermaid svg {
-  max-width: 100%;
-}
-
 .reading-content img {
   max-width: 100%;
   border-radius: 0.5rem;

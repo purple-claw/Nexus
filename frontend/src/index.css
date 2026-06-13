@@ -290,7 +290,7 @@
   }
   .prose blockquote strong { color: var(--text-primary); }
   .prose code {
-    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    font-family: 'Source Code Pro', 'JetBrains Mono', ui-monospace, monospace;
     font-size: 0.875em;
   }
   .prose p > code, .prose li > code {
