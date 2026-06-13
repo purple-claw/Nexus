@@ -137,7 +137,7 @@ export default function ReadingList() {
         title: f.title || 'Untitled Formula',
         content: f.content || '',
         topic_title: f.topic_title,
-        linkTo: `/topics/${f.topic_id}`,
+        linkTo: `/reading/item/formula/${f.id}`,
       })
     }
 
@@ -148,7 +148,7 @@ export default function ReadingList() {
         title: n.content ? n.content.slice(0, 60).trim() : 'Untitled Note',
         content: n.content || '',
         topic_title: n.topic_title,
-        linkTo: `/topics/${n.topic_id}`,
+        linkTo: `/reading/item/note/${n.id}`,
       })
     }
 

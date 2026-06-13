@@ -53,6 +53,35 @@ router.get('/reading/notes', authMiddleware, async (req, res) => {
   res.json(result)
 })
 
+router.get('/reading/formula/:formulaId', authMiddleware, async (req, res) => {
+  const formulaId = parseInt(req.params.formulaId)
+  const f = db.get('formulas', formulaId)
+  if (!f) return res.status(404).json({ error: 'Not found' })
+  const topic = db.get('topics', f.topic_id)
+  if (!topic || topic.user_id !== req.user.id) return res.status(404).json({ error: 'Not found' })
+  res.json({
+    id: f.id,
+    title: f.title || '',
+    content: f.content || '',
+    topic_title: topic.title,
+    topic_id: topic.id,
+  })
+})
+
+router.get('/reading/note/:noteId', authMiddleware, async (req, res) => {
+  const noteId = parseInt(req.params.noteId)
+  const n = db.get('notes', noteId)
+  if (!n) return res.status(404).json({ error: 'Not found' })
+  const topic = db.get('topics', n.topic_id)
+  if (!topic || topic.user_id !== req.user.id) return res.status(404).json({ error: 'Not found' })
+  res.json({
+    id: n.id,
+    content: n.content || '',
+    topic_title: topic.title,
+    topic_id: topic.id,
+  })
+})
+
 router.get('/reading/:textId', authMiddleware, async (req, res) => {
   const textId = parseInt(req.params.textId)
   const rb = db.get('reading_blocks', textId)

@@ -10,6 +10,7 @@ import Library from './pages/Library'
 import TopicDetail from './pages/TopicDetail'
 import ReadingList from './pages/ReadingList'
 import ReadingDetail from './pages/ReadingDetail'
+import ContentDetail from './pages/ContentDetail'
 import MCQList from './pages/MCQList'
 import MCQPractice from './pages/MCQPractice'
 import Upload from './pages/Upload'
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="topics/:id" element={<TopicDetail />} />
         <Route path="reading" element={<ReadingList />} />
         <Route path="reading/:id" element={<ReadingDetail />} />
+        <Route path="reading/item/:type/:id" element={<ContentDetail />} />
         <Route path="mcqs" element={<MCQList />} />
         <Route path="mcqs/practice" element={<MCQPractice />} />
         <Route path="upload" element={<Upload />} />
