@@ -11,7 +11,7 @@ router.get('/todos', authMiddleware, async (req, res) => {
     const topicTodos = db.find('todos', { topic_id: t.id })
     if (topicTodos.length > 0) {
       topicTodos.sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0))
-      groups.push({ topic: t.title, todos: topicTodos })
+      groups.push({ topic: t.title, topic_id: t.id, todos: topicTodos })
     }
   }
   res.json({ groups })

@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import {
   FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft,
   FiTag, FiBarChart2, FiEdit2, FiCheck, FiX, FiTrash2,
-  FiCopy, FiCheckCircle, FiBookOpen,
+  FiCopy, FiCheckCircle, FiBookOpen, FiChevronDown, FiChevronUp,
 } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
@@ -62,6 +64,28 @@ function ReadingBlockCard({ block, index }) {
 
 function FormulaCard({ formula, index }) {
   const [expanded, setExpanded] = useState(false)
+  const lines = (formula.content || '').split('\n').length
+  const isLong = lines > 8
+
+  const formulaTheme = {
+    ...vscDarkPlus,
+    'pre[class*="language-"]': {
+      ...vscDarkPlus['pre[class*="language-"]'],
+      background: 'transparent',
+      padding: '0',
+      margin: '0',
+      border: 'none',
+      boxShadow: 'none',
+    },
+    'code[class*="language-"]': {
+      ...vscDarkPlus['code[class*="language-"]'],
+      background: 'transparent',
+      fontFamily: '"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace',
+      fontSize: '13px',
+      lineHeight: '1.7',
+    },
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -69,52 +93,69 @@ function FormulaCard({ formula, index }) {
       transition={{ delay: index * 0.05, ease: 'easeOut' }}
       className="card overflow-hidden group"
     >
-      <div className="p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0">
-              <FiBarChart2 className="w-3.5 h-3.5 text-white" />
+      <div className="relative">
+        <div className="absolute inset-0 rounded-[1rem] bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+        <div className="p-5 relative">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
+                <FiBarChart2 className="w-3.5 h-3.5 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
+                {formula.title || 'Formula'}
+              </h3>
             </div>
-            <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>
-              {formula.title || 'Formula'}
-            </h3>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <CopyButton text={formula.content} />
+            </div>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <CopyButton text={formula.content} />
-          </div>
-        </div>
-        <div
-          className="relative rounded-xl overflow-hidden cursor-pointer"
-          style={{ background: 'var(--bg-elevated)' }}
-          onClick={() => setExpanded(!expanded)}
-        >
-          <div className={`p-4 transition-all ${expanded ? '' : 'max-h-32 overflow-hidden'}`}>
-            <pre className="!m-0 !bg-transparent !border-0">
-              <code className="text-sm font-mono leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-                {formula.content}
-              </code>
-            </pre>
-            {!expanded && formula.content.length > 200 && (
+
+          <div
+            className={`relative rounded-xl overflow-hidden transition-all duration-300 ${
+              isLong ? 'cursor-pointer' : ''
+            }`}
+            style={{ background: '#1E1E1E', border: '1px solid rgba(255,255,255,0.06)' }}
+            onClick={() => isLong && setExpanded(!expanded)}
+          >
+            <div className={`transition-all duration-300 ${expanded || !isLong ? '' : 'max-h-48 overflow-hidden'}`}>
+              <div className="p-4">
+                <SyntaxHighlighter
+                  language="python"
+                  style={formulaTheme}
+                  showLineNumbers={lines > 3}
+                  wrapLines={false}
+                  lineNumberStyle={{
+                    color: '#858585',
+                    minWidth: '2.75em',
+                    paddingRight: '1.25em',
+                    userSelect: 'none',
+                    borderRight: '1px solid #404040',
+                    marginRight: '0.85em',
+                  }}
+                  customStyle={{ margin: 0, borderRadius: 0, background: 'transparent' }}
+                  codeTagProps={{ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-word' } }}
+                >
+                  {formula.content}
+                </SyntaxHighlighter>
+              </div>
+              {!expanded && isLong && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
+                  style={{ background: 'linear-gradient(transparent, #1E1E1E)' }}
+                />
+              )}
+            </div>
+            {isLong && (
               <div
-                className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(transparent, var(--bg-elevated))',
-                }}
-              />
+                className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors cursor-pointer border-t"
+                style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--text-tertiary)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+              >
+                {expanded ? <><FiChevronUp className="w-3.5 h-3.5" /> Show less</> : <><FiChevronDown className="w-3.5 h-3.5" /> Show all ({lines} lines)</>}
+              </div>
             )}
           </div>
-          {formula.content.length > 200 && (
-            <div className="px-4 pb-3">
-              <button
-                className="text-xs font-medium transition-colors"
-                style={{ color: 'var(--accent)' }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-              >
-                {expanded ? 'Show less' : 'Show more'}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </motion.div>
