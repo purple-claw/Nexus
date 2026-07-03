@@ -52,7 +52,7 @@ declare module 'framer-motion' {
     li: ComponentType<CustomDOMProps<JSX.IntrinsicElements['li']>>
   }
 
-  export { AnimatePresence, AnimatePresenceProps }
+  export { AnimatePresence }
   export const AnimatePresence: ComponentType<{ initial?: boolean; mode?: 'wait' | 'sync' | 'popLayout'; children?: any }>
 }
 

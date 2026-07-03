@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiUpload, FiFile, FiX, FiCheck, FiArrowRight } from 'react-icons/fi'
+import { FiUpload, FiFile, FiX, FiCheck, FiArrowRight, FiFolderPlus } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import { useToast } from '../context/ToastContext'
@@ -11,10 +11,20 @@ export default function Upload() {
   const [filename, setFilename] = useState('')
   const [loading, setLoading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [showNewCategory, setShowNewCategory] = useState(false)
   const fileRef = useRef(null)
   const textareaRef = useRef(null)
   const { toast } = useToast()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    client.get('/categories')
+      .then(r => setCategories(r.data || []))
+      .catch(() => {})
+  }, [])
 
   const handleFile = (file) => {
     if (!file) return
@@ -57,6 +67,11 @@ export default function Upload() {
     try {
       const formData = new FormData()
       formData.append('md_content', content)
+      if (showNewCategory && newCategoryName.trim()) {
+        formData.append('category_name', newCategoryName.trim())
+      } else if (selectedCategoryId) {
+        formData.append('category_id', selectedCategoryId)
+      }
       const { data } = await client.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -130,6 +145,49 @@ export default function Upload() {
                 onChange={(e) => handleFile(e.target.files[0])}
                 className="hidden"
               />
+            </div>
+
+            {/* Category picker */}
+            <div className="px-4 pt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FiFolderPlus className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                  Category <span className="font-normal">(optional — defaults to document metadata)</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => {
+                    setSelectedCategoryId(e.target.value)
+                    if (e.target.value === 'new') {
+                      setShowNewCategory(true)
+                      setNewCategoryName('')
+                    } else {
+                      setShowNewCategory(false)
+                    }
+                  }}
+                  className="input text-sm flex-1"
+                >
+                  <option value="">Auto-detect from document</option>
+                  {categories.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                  <option value="new">+ Create new category...</option>
+                </select>
+              </div>
+              {showNewCategory && (
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Enter category name..."
+                    className="input text-sm w-full"
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
 
             {/* Textarea */}

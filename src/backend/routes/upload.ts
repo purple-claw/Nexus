@@ -4,7 +4,7 @@ import db from '../db'
 import { config } from '../config'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { saveParsedDocument } from '../services/study'
-import { parseMarkdown } from '../parser'
+import { parseMarkdown, getOrCreateCategory } from '../parser'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxContentLength } })
 const router = Router()
@@ -43,7 +43,15 @@ router.post('/upload', authMiddleware, upload.single('file') as any, async (req:
     }
 
     const parsed = parseMarkdown(content)
-    const topicId = await saveParsedDocument(db, req.user!.id, parsed, filename)
+    let categoryId: number | undefined
+    const bodyCategoryId = parseInt(req.body?.category_id)
+    if (bodyCategoryId) {
+      const cat = db.get('categories', bodyCategoryId)
+      if (cat && cat.user_id === req.user!.id) categoryId = bodyCategoryId
+    } else if (req.body?.category_name) {
+      categoryId = await getOrCreateCategory(db, req.body.category_name, null, req.user!.id)
+    }
+    const topicId = await saveParsedDocument(db, req.user!.id, parsed, filename, categoryId)
     res.json({ success: true, message: 'Document saved successfully!', topic_id: topicId })
   } catch (err: any) {
     console.error('Upload error:', err.message, err.stack)

@@ -73,18 +73,27 @@ export default function CalendarPage() {
     return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
-  const [selectedTopicId, setSelectedTopicId] = useState('')
+  const [selectedTopicIds, setSelectedTopicIds] = useState<Set<number>>(new Set())
+
+  const toggleTopic = (id: number) => {
+    setSelectedTopicIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleAssign = async () => {
-    if (!assignModal || !selectedTopicId) return
+    if (!assignModal || selectedTopicIds.size === 0) return
     try {
       await client.post('/calendar/assign', {
-        topic_id: parseInt(selectedTopicId),
+        topic_ids: Array.from(selectedTopicIds),
         date: assignModal.date,
       })
-      toast.success('Topic assigned!')
+      toast.success(`${selectedTopicIds.size} topic${selectedTopicIds.size > 1 ? 's' : ''} assigned!`)
       setAssignModal(null)
-      setSelectedTopicId('')
+      setSelectedTopicIds(new Set())
       fetchData()
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to assign')
@@ -154,7 +163,7 @@ export default function CalendarPage() {
                 style={{ borderColor: 'var(--border)' }}
               >
                 <button
-                  onClick={() => { setAssignModal({ date: dateStr }); setSelectedTopicId('') }}
+                  onClick={() => { setAssignModal({ date: dateStr }); setSelectedTopicIds(new Set()) }}
                   className={`w-full h-full rounded-lg flex flex-col items-center justify-center transition-colors ${
                     isToday ? 'ring-2 ring-sky-500/50' : ''
                   }`}
@@ -223,25 +232,39 @@ export default function CalendarPage() {
                   weekday: 'long', month: 'long', day: 'numeric'
                 })}
               </p>
-              <select
-                value={selectedTopicId}
-                onChange={(e) => setSelectedTopicId(e.target.value)}
-                className="input mb-4"
-              >
-                <option value="">Select a topic...</option>
+              <div className="max-h-60 overflow-y-auto space-y-1 mb-4">
                 {availableTopics.map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
+                  <label
+                    key={t.id}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors"
+                    style={{ color: 'var(--text-primary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTopicIds.has(t.id)}
+                      onChange={() => toggleTopic(t.id)}
+                      className="w-4 h-4 rounded accent-sky-500"
+                    />
+                    <span className="text-sm">{t.title}</span>
+                  </label>
                 ))}
-              </select>
+                {availableTopics.length === 0 && (
+                  <p className="text-sm text-center py-4" style={{ color: 'var(--text-tertiary)' }}>
+                    No topics available
+                  </p>
+                )}
+              </div>
               <div className="flex justify-end gap-2">
                 <button onClick={() => setAssignModal(null)} className="btn btn-ghost">Cancel</button>
                 <button
                   onClick={handleAssign}
-                  disabled={!selectedTopicId}
+                  disabled={selectedTopicIds.size === 0}
                   className="btn btn-primary"
                 >
                   <FiPlus className="w-4 h-4" />
-                  Assign
+                  {selectedTopicIds.size > 0 ? `Assign (${selectedTopicIds.size})` : 'Assign'}
                 </button>
               </div>
             </motion.div>

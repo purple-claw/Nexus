@@ -279,12 +279,15 @@ async function listMcqs(db: DbLike, userId: number): Promise<any[]> {
   return result
 }
 
-async function saveParsedDocument(db: DbLike, userId: number, parsed: ParsedResult, filename: string): Promise<number> {
+async function saveParsedDocument(db: DbLike, userId: number, parsed: ParsedResult, filename: string, overrideCategoryId?: number): Promise<number> {
   const meta = parsed.metadata
   let parentId: number | null = null
   let categoryId: number
 
-  if (meta.subcategory) {
+  if (overrideCategoryId) {
+    const cat = db.get('categories', overrideCategoryId)
+    categoryId = cat ? overrideCategoryId : await getOrCreateCategory(db as any, meta.category, null, userId)
+  } else if (meta.subcategory) {
     parentId = await getOrCreateCategory(db as any, meta.category, null, userId)
     categoryId = await getOrCreateCategory(db as any, meta.subcategory, parentId, userId)
   } else {

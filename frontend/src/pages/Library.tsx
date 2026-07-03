@@ -9,7 +9,7 @@ import client from '../api/client'
 import { useToast } from '../context/ToastContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 
-function TopicCard({ topic, onDateChange, onClearDate, onEdit: _onEdit, onDelete, dateInputs, editingId, editTitle, setEditTitle, setEditingId, handleSaveTitle, today, deleting }: any) {
+function TopicCard({ topic, onDateChange, onClearDate, onEdit: _onEdit, onDelete, dateInputs, editingId, editTitle, setEditTitle, setEditingId, handleSaveTitle, today, deleting }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
