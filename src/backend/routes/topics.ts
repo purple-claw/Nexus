@@ -102,6 +102,18 @@ router.delete('/topics/:topicId', authMiddleware, async (req: AuthRequest, res: 
     await db.deleteWhere('documents', { id: topic.document_id })
     await db.delete('topics', topicId)
 
+    // Clean up orphaned categories (empty with no children and no topics)
+    const allCats = db.find('categories', { user_id: req.user!.id })
+    const toDelete: number[] = []
+    for (const c of allCats) {
+      const hasTopics = db.find('topics', { user_id: req.user!.id, category_id: c.id }).length > 0
+      const hasChildren = allCats.some((child: any) => child.parent_id === c.id)
+      if (!hasTopics && !hasChildren) toDelete.push(c.id)
+    }
+    for (const catId of toDelete) {
+      await db.delete('categories', catId)
+    }
+
     res.json({ success: true })
   } catch (err: any) {
     console.error('Error deleting topic:', err)

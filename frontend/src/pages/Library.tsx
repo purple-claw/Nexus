@@ -283,6 +283,7 @@ export default function Library() {
         delete next[topic.id]
         return next
       })
+      toast.success('Topic deleted')
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Failed to delete')
     }
