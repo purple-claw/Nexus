@@ -318,4 +318,4 @@ async function saveParsedDocument(db, userId, parsed, filename) {
   return topicId
 }
 
-module.exports = { dashboardSummary, libraryTree, topicDetail, dailyPlan, listMcqs, saveParsedDocument }
+module.exports = { parseOptions, dashboardSummary, libraryTree, topicDetail, dailyPlan, listMcqs, saveParsedDocument }

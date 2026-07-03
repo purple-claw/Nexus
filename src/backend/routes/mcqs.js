@@ -1,16 +1,7 @@
 const { Router  } = require('express')
 const db = require('../db.js')
 const { authMiddleware  } = require('../middleware/auth.js')
-const { listMcqs  } = require('../services/study.js')
-
-function parseOptions(value) {
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
+const { parseOptions } = require('../services/study.js')
 
 const router = Router()
 

@@ -108,39 +108,49 @@ function parseMarkdown(content) {
 
   const mcqsText = sections.mcqs || ''
   if (mcqsText) {
-    const mcqBlocks = mcqsText.split(/\n(?=\*\*Q\d+:)/)
-    for (const block of mcqBlocks) {
-      const b = block.trim()
-      if (!b) continue
-      const qMatch = b.match(/\*\*Q\d+:\*\*\s*(.+?)(?=\n(?:-\s+[A-D]\)))/s)
-      if (!qMatch) continue
-      const question = clean(qMatch[1])
+    if (mcqsText.length > 50000) {
+      console.warn('MCQ section too large, skipping parse')
+    } else {
+      const mcqBlocks = mcqsText.split(/\n(?=\*\*Q\d+:)/)
+      for (const block of mcqBlocks) {
+        if (block.length > 10000) continue
+        const b = block.trim()
+        if (!b) continue
+        const qIdx = b.indexOf('**Q')
+        const optionsIdx = b.indexOf('\n- ')
+        if (qIdx === -1 || optionsIdx === -1 || optionsIdx <= qIdx) continue
+        const question = clean(b.slice(b.indexOf('**:') + 3, optionsIdx).trim())
 
-      const options = []
-      const optMatches = b.matchAll(/-\s*([A-D])\)\s*(.+)/g)
-      for (const match of optMatches) {
-        options.push({ key: match[1].toUpperCase(), text: clean(match[2]) })
-      }
+        const options = []
+        const optLines = b.split('\n')
+        for (const line of optLines) {
+          const optMatch = line.match(/^\s*-\s*([A-Da-d])\)\s+(.+)/)
+          if (optMatch) {
+            options.push({ key: optMatch[1].toUpperCase(), text: clean(optMatch[2]) })
+            if (options.length >= 8) break
+          }
+        }
 
-      const answerM = b.match(/\*\*Answer:\*\*\s*([A-D])/)
-      const answer = answerM ? clean(answerM[1]).toUpperCase() : ''
+        const answerM = b.match(/\*\*Answer:\*\*\s*([A-D])/)
+        const answer = answerM ? clean(answerM[1]).toUpperCase() : ''
 
-      const difficultyM = b.match(/\*\*Difficulty:\*\*\s*(.+)/)
-      const difficulty = difficultyM ? clean(difficultyM[1], 'medium').toLowerCase() : 'medium'
+        const difficultyM = b.match(/\*\*Difficulty:\*\*\s*(.{1,50})/)
+        const difficulty = difficultyM ? clean(difficultyM[1], 'medium').toLowerCase() : 'medium'
 
-      const explM = b.match(/\*\*Explanation:\*\*\s*(.+)/s)
-      const explanation = explM ? clean(explM[1]) : ''
+        const explIdx = b.indexOf('**Explanation:**')
+        const explanation = explIdx !== -1 ? clean(b.slice(explIdx + 16).trim(), '') : ''
 
-      if (options.length > 0 && answer) {
-        result.mcqs.push({
-          question,
-          options: JSON.stringify(options),
-          answer,
-          explanation,
-          difficulty,
-          order_idx: orderIdx,
-        })
-        orderIdx++
+        if (options.length > 0 && answer) {
+          result.mcqs.push({
+            question,
+            options: JSON.stringify(options),
+            answer,
+            explanation,
+            difficulty,
+            order_idx: orderIdx,
+          })
+          orderIdx++
+        }
       }
     }
   }

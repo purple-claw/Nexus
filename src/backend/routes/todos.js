@@ -29,7 +29,11 @@ router.get('/todos', authMiddleware, async (req, res) => {
     const topicTodos = todosByTopic[tid]
     if (topicTodos && topicTodos.length > 0) {
       topicTodos.sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0))
-      groups.push({ topic: topicTitles[tid] || '', topic_id: tid, todos: topicTodos })
+      groups.push({
+        topic: topicTitles[tid] || '',
+        topic_id: tid,
+        todos: topicTodos.map(t => ({ ...t, is_completed: t.is_completed === 1 })),
+      })
     }
   }
   res.json({ groups })
@@ -45,7 +49,7 @@ router.post('/todos/:todoId/toggle', authMiddleware, async (req, res) => {
   }
   const newStatus = todo.is_completed ? 0 : 1
   await db.update('todos', todoId, { is_completed: newStatus })
-  res.json({ success: true, is_completed: !!newStatus })
+  res.json({ success: true, is_completed: newStatus === 1 })
 })
 
 module.exports = router

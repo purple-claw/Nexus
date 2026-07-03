@@ -16,6 +16,8 @@ if (config.databaseUrl) {
   pgPool.on('error', (err) => {
     console.error('PostgreSQL pool error:', err.message, err.stack)
   })
+} else if (process.env.NODE_ENV === 'production') {
+  console.warn('WARNING: DATABASE_URL not set. Using JSON file store. Data will not persist across restarts in production.')
 }
 
 let writeLock = Promise.resolve()

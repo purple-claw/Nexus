@@ -32,11 +32,12 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none" aria-live="polite" aria-relevant="additions removals">
         <AnimatePresence>
           {toasts.map(t => (
             <motion.div
               key={t.id}
+              role="alert"
               initial={{ opacity: 0, x: 100, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 100, scale: 0.95 }}
@@ -52,15 +53,16 @@ export function ToastProvider({ children }) {
                 }`,
               }}
             >
-              {t.type === 'success' && <FiCheckCircle className="w-5 h-5 shrink-0 text-green-500" />}
-              {t.type === 'error' && <FiAlertCircle className="w-5 h-5 shrink-0 text-red-500" />}
-              {t.type === 'info' && <FiInfo className="w-5 h-5 shrink-0 text-sky-500" />}
+              {t.type === 'success' && <FiCheckCircle className="w-5 h-5 shrink-0 text-green-500" aria-hidden="true" />}
+              {t.type === 'error' && <FiAlertCircle className="w-5 h-5 shrink-0 text-red-500" aria-hidden="true" />}
+              {t.type === 'info' && <FiInfo className="w-5 h-5 shrink-0 text-sky-500" aria-hidden="true" />}
               <p className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>{t.message}</p>
               <button
                 onClick={() => removeToast(t.id)}
                 className="shrink-0 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                aria-label="Dismiss notification"
               >
-                <FiX className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                <FiX className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} aria-hidden="true" />
               </button>
             </motion.div>
           ))}

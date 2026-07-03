@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 export default function LoadingSpinner({ fullPage = false }) {
   const content = (
-    <div className="flex flex-col items-center justify-center gap-3">
+    <div className="flex flex-col items-center justify-center gap-3" role="status" aria-live="polite">
       <motion.div
         className="w-8 h-8 border-2 rounded-full"
         style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}

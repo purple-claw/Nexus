@@ -38,6 +38,13 @@ router.post('/calendar/assign', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'A valid YYYY-MM-DD date is required' })
   }
 
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const planDate = new Date(date + 'T00:00:00')
+  if (planDate < today) {
+    return res.status(400).json({ error: 'Cannot assign topics to past dates' })
+  }
+
   const existing = db.findOne('daily_plans', { user_id: req.user.id, plan_date: date, topic_id: topicId })
   if (!existing) {
     await db.insert('daily_plans', { user_id: req.user.id, plan_date: date, topic_id: topicId })

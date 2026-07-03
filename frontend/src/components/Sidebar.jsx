@@ -62,7 +62,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto" aria-label="Main navigation">
         {navItems.map(item => {
           const Icon = item.icon
           const isActive = item.to === '/'
@@ -87,8 +87,9 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
               onMouseLeave={(e) => {
                 if (!isActive) e.currentTarget.style.background = 'transparent'
               }}
+              aria-label={collapsed ? item.label : undefined}
             >
-              <Icon className="w-5 h-5 shrink-0" />
+              <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
               {!collapsed && (
                 <span>{item.label}</span>
               )}
@@ -112,8 +113,9 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
             collapsed ? 'justify-center' : ''
           }`}
           style={{ color: 'var(--text-tertiary)' }}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? <FiChevronRight className="w-5 h-5" /> : <><FiChevronLeft className="w-5 h-5" /> Collapse</>}
+          {collapsed ? <FiChevronRight className="w-5 h-5" aria-hidden="true" /> : <><FiChevronLeft className="w-5 h-5" aria-hidden="true" /> Collapse</>}
         </button>
       </div>
     </div>

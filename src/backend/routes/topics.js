@@ -88,6 +88,7 @@ router.delete('/topics/:topicId', authMiddleware, async (req, res) => {
     await db.deleteWhere('notes', { topic_id: topicId })
     await db.deleteWhere('todos', { topic_id: topicId })
     await db.deleteWhere('daily_plans', { topic_id: topicId })
+    await db.deleteWhere('documents', { id: topic.document_id })
     await db.delete('topics', topicId)
 
     res.json({ success: true })

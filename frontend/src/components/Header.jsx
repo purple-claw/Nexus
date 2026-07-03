@@ -39,8 +39,9 @@ export default function Header({ setSidebarOpen }) {
           onClick={() => setSidebarOpen?.(true)}
           className="lg:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
           style={{ color: 'var(--text-secondary)' }}
+          aria-label="Open sidebar"
         >
-          <FiMenu className="w-5 h-5" />
+          <FiMenu className="w-5 h-5" aria-hidden="true" />
         </button>
         <div>
           <h1 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -58,8 +59,9 @@ export default function Header({ setSidebarOpen }) {
           style={{ color: 'var(--text-secondary)' }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'var(--nav-hover-bg)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+          {isDark ? <FiSun className="w-5 h-5" aria-hidden="true" /> : <FiMoon className="w-5 h-5" aria-hidden="true" />}
         </motion.button>
 
         {/* User Menu */}
@@ -70,9 +72,11 @@ export default function Header({ setSidebarOpen }) {
             style={{ color: 'var(--text-secondary)' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--nav-hover-bg)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            aria-label="User menu"
+            aria-expanded={menuOpen}
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
-              <FiUser className="w-3.5 h-3.5 text-white" />
+              <FiUser className="w-3.5 h-3.5 text-white" aria-hidden="true" />
             </div>
             <span className="hidden sm:block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
               {user?.username}

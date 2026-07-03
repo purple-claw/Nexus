@@ -114,8 +114,9 @@ export default function CalendarPage() {
           <button onClick={prevMonth} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            aria-label="Previous month"
           >
-            <FiChevronLeft className="w-5 h-5" />
+            <FiChevronLeft className="w-5 h-5" aria-hidden="true" />
           </button>
           <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
             {new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -123,8 +124,9 @@ export default function CalendarPage() {
           <button onClick={nextMonth} className="p-2 rounded-lg transition-colors" style={{ color: 'var(--text-secondary)' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            aria-label="Next month"
           >
-            <FiChevronRight className="w-5 h-5" />
+            <FiChevronRight className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -165,6 +167,7 @@ export default function CalendarPage() {
                   onMouseLeave={(e) => {
                     if (!dayEvents) e.currentTarget.style.background = 'transparent'
                   }}
+                  aria-label={`${new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}${dayEvents ? `, ${dayEvents.topics} topic${dayEvents.topics > 1 ? 's' : ''}` : ''}`}
                 >
                   <span className={`text-sm font-medium ${isToday ? 'text-sky-500' : ''}`}
                     style={{ color: dayEvents ? 'var(--accent)' : 'var(--text-primary)' }}>
@@ -210,8 +213,9 @@ export default function CalendarPage() {
                   style={{ color: 'var(--text-tertiary)' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  aria-label="Close assign modal"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>

@@ -97,6 +97,7 @@ router.get('/reading/code', authMiddleware, async (req, res) => {
   const { topicIds, topicTitles } = getTopicIdsAndTitles(req.user.id)
   const blocksByTopic = groupByTopicId(db.find('reading_blocks'))
   const result = []
+  let snippetIdCounter = 0
   const codeRegex = /```(\w+)\s*\n([\s\S]*?)```/g
   for (const tid of topicIds) {
     const blocks = blocksByTopic[tid] || []
@@ -108,8 +109,9 @@ router.get('/reading/code', authMiddleware, async (req, res) => {
         const language = match[1]
         const code = match[2].trim()
         if (code.split(/\s+/).length >= 3) {
+          snippetIdCounter++
           result.push({
-            id: `${rb.id}-${result.length}`,
+            id: snippetIdCounter,
             title: rb.title || '',
             language,
             content: code,
