@@ -3,23 +3,37 @@ const path = require('path')
 const config = require('./config.js')
 
 const DB_PATH = path.resolve(__dirname, '../../data/db.json')
+const DB_TMP_PATH = DB_PATH + '.tmp'
 
 let pgPool = null
 if (config.databaseUrl) {
   const pg = require('pg')
   pgPool = new pg.Pool({
     connectionString: config.databaseUrl,
-    ssl: { rejectUnauthorized: false },
+    ssl: config.databaseUrl.includes('localhost') ? false : { rejectUnauthorized: true },
     connectionTimeoutMillis: 10000,
   })
+  pgPool.on('error', (err) => {
+    console.error('PostgreSQL pool error:', err.message, err.stack)
+  })
 }
+
+let writeLock = Promise.resolve()
 
 class JsonDB {
   data = {}
   counters = {}
   _ready = false
+  _initPromise = null
 
   async init() {
+    if (this._ready) return
+    if (this._initPromise) return this._initPromise
+    this._initPromise = this._initInternal()
+    return this._initPromise
+  }
+
+  async _initInternal() {
     if (this._ready) return
     await this._initStore()
     await this._load()
@@ -67,12 +81,22 @@ class JsonDB {
     } else {
       try {
         const raw = fs.readFileSync(DB_PATH, 'utf-8')
-        const store = JSON.parse(raw)
-        for (const key of Object.keys(store)) {
-          this.data[key] = store[key].data
-          this.counters[key] = store[key].next_id
+        if (raw.trim()) {
+          const store = JSON.parse(raw)
+          for (const key of Object.keys(store)) {
+            this.data[key] = store[key].data
+            this.counters[key] = store[key].next_id
+          }
         }
-      } catch {
+      } catch (parseErr) {
+        console.error('WARN: Corrupted db.json detected — backing up and starting fresh:', parseErr.message)
+        try {
+          const backupPath = DB_PATH + '.' + Date.now() + '.bak'
+          fs.copyFileSync(DB_PATH, backupPath)
+          console.error('Backed up corrupted db.json to', backupPath)
+        } catch (backupErr) {
+          console.error('Failed to backup corrupted db.json:', backupErr.message)
+        }
       }
     }
   }
@@ -114,19 +138,29 @@ class JsonDB {
         client.release()
       }
     } else {
-      let store = {}
-      try {
-        store = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'))
-      } catch {
-      }
-      if (table) {
-        store[table] = { data: this.data[table], next_id: this.counters[table] }
-      } else {
-        for (const key of Object.keys(this.data)) {
-          store[key] = { data: this.data[key], next_id: this.counters[key] }
+      const task = async () => {
+        let store = {}
+        try {
+          const raw = fs.readFileSync(DB_PATH, 'utf-8')
+          if (raw.trim()) store = JSON.parse(raw)
+        } catch (readErr) {
+          if (readErr.code !== 'ENOENT') {
+            console.error('WARN: Could not read db.json for flush, starting fresh:', readErr.message)
+          }
         }
+        if (table) {
+          store[table] = { data: this.data[table], next_id: this.counters[table] }
+        } else {
+          for (const key of Object.keys(this.data)) {
+            store[key] = { data: this.data[key], next_id: this.counters[key] }
+          }
+        }
+        const content = JSON.stringify(store, null, 2)
+        fs.writeFileSync(DB_TMP_PATH, content, 'utf-8')
+        fs.renameSync(DB_TMP_PATH, DB_PATH)
       }
-      fs.writeFileSync(DB_PATH, JSON.stringify(store, null, 2), 'utf-8')
+      writeLock = writeLock.then(task, task)
+      await writeLock
     }
   }
 

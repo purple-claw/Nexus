@@ -9,10 +9,11 @@ const difficultyColors = {
   hard: { badge: 'badge-danger', text: 'Hard' },
 }
 
-export default function MCQQuestion({ question, onAnswer, disabled }) {
+export default function MCQQuestion({ question, onAnswer, disabled, revealedAnswer }) {
   const [selected, setSelected] = useState(null)
   const [answered, setAnswered] = useState(false)
   const [showExplanation, setShowExplanation] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   if (!question) return null
 
@@ -21,24 +22,27 @@ export default function MCQQuestion({ question, onAnswer, disabled }) {
     : question.options
 
   const diff = difficultyColors[question.difficulty] || difficultyColors.medium
-  const isCorrect = selected === question.answer
+  const correctAnswer = revealedAnswer || question.answer
+  const isCorrect = selected === correctAnswer
 
-  const handleSelect = (key) => {
-    if (answered || disabled) return
+  const handleSelect = async (key) => {
+    if (answered || disabled || submitting) return
     setSelected(key)
     setAnswered(true)
-    onAnswer?.(question.id, key === question.answer)
+    setSubmitting(true)
+    await onAnswer?.(question.id, key === correctAnswer)
+    setSubmitting(false)
   }
 
   const getOptionStyle = (key) => {
     if (!answered) return {}
-    if (key === question.answer) {
+    if (key === correctAnswer) {
       return {
         borderColor: '#22c55e',
         background: 'rgba(34,197,94,0.1)',
       }
     }
-    if (key === selected && key !== question.answer) {
+    if (key === selected && key !== correctAnswer) {
       return {
         borderColor: '#f43f5e',
         background: 'rgba(244,63,94,0.1)',
@@ -99,10 +103,10 @@ export default function MCQQuestion({ question, onAnswer, disabled }) {
                 {opt.key}
               </span>
               <span className="flex-1"><InlineMarkdown content={opt.text} /></span>
-              {answered && opt.key === question.answer && (
+              {answered && opt.key === correctAnswer && (
                 <FiCheck className="w-5 h-5 text-green-500 shrink-0" />
               )}
-              {answered && opt.key === selected && opt.key !== question.answer && (
+              {answered && opt.key === selected && opt.key !== correctAnswer && (
                 <FiX className="w-5 h-5 text-red-500 shrink-0" />
               )}
             </motion.button>

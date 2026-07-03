@@ -5,8 +5,10 @@ import { FiTarget, FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft, FiCh
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { useToast } from '../context/ToastContext'
 
 export default function DailyView() {
+  const { toast } = useToast()
   const { date: paramDate } = useParams()
   const [date, setDate] = useState(paramDate || new Date().toISOString().slice(0, 10))
   const [data, setData] = useState(null)
@@ -23,7 +25,7 @@ export default function DailyView() {
         const { data: res } = await client.get(`/daily/${date}`)
         setData(res)
       } catch (err) {
-        console.error('Failed to load daily plan', err)
+        toast.error('Failed to load daily plan')
       } finally {
         setLoading(false)
       }

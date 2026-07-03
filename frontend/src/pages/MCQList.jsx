@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { FiHelpCircle, FiPlay, FiBarChart2 } from 'react-icons/fi'
 import client from '../api/client'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { useToast } from '../context/ToastContext'
 
 const difficultyColors = {
   easy: { bg: 'rgba(34,197,94,0.1)', text: '#22c55e' },
@@ -12,6 +13,7 @@ const difficultyColors = {
 }
 
 export default function MCQList() {
+  const { toast } = useToast()
   const [mcqs, setMcqs] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +23,7 @@ export default function MCQList() {
         const { data } = await client.get('/mcqs')
         setMcqs(data)
       } catch (err) {
-        console.error('Failed to load MCQs', err)
+        toast.error('Failed to load MCQs')
       } finally {
         setLoading(false)
       }

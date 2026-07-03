@@ -5,14 +5,17 @@ import { FiHelpCircle, FiRefreshCw, FiCheckCircle, FiXCircle, FiArrowLeft, FiBar
 import client from '../api/client'
 import MCQQuestion from '../components/MCQQuestion'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { useToast } from '../context/ToastContext'
 
 export default function MCQPractice() {
+  const { toast } = useToast()
   const [allMcqs, setAllMcqs] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [results, setResults] = useState([])
   const [sessionComplete, setSessionComplete] = useState(false)
   const [sessionStarted, setSessionStarted] = useState(false)
+  const [revealedAnswer, setRevealedAnswer] = useState(null)
 
   useEffect(() => {
     const fetchMCQs = async () => {
@@ -20,7 +23,7 @@ export default function MCQPractice() {
         const { data } = await client.get('/mcqs')
         setAllMcqs(data)
       } catch (err) {
-        console.error('Failed to load MCQs', err)
+        toast.error('Failed to load MCQs')
       } finally {
         setLoading(false)
       }
@@ -43,11 +46,15 @@ export default function MCQPractice() {
   const handleAnswer = useCallback(async (mcqId, isCorrect) => {
     setResults(prev => [...prev, { mcqId, isCorrect }])
     try {
-      await client.post(`/mcqs/${mcqId}/answer`, { is_correct: isCorrect })
-    } catch {}
+      const { data } = await client.post(`/mcqs/${mcqId}/answer`, { is_correct: isCorrect })
+      setRevealedAnswer(data.correctAnswer)
+    } catch {
+      toast.error('Failed to record answer')
+    }
   }, [])
 
   const nextQuestion = () => {
+    setRevealedAnswer(null)
     if (currentIndex < shuffled.length - 1) {
       setCurrentIndex(prev => prev + 1)
     } else {
@@ -60,6 +67,7 @@ export default function MCQPractice() {
     setResults([])
     setSessionComplete(false)
     setSessionStarted(false)
+    setRevealedAnswer(null)
   }
 
   if (loading) return <LoadingSpinner />
@@ -184,6 +192,7 @@ export default function MCQPractice() {
           <MCQQuestion
             question={current}
             onAnswer={handleAnswer}
+            revealedAnswer={revealedAnswer}
           />
         </motion.div>
       </AnimatePresence>

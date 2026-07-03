@@ -5,15 +5,21 @@ import { FiFileText, FiBookOpen } from 'react-icons/fi'
 import client from '../api/client'
 import LoadingSpinner from '../components/LoadingSpinner'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import { useToast } from '../context/ToastContext'
 
 export default function ReadingList() {
+  const { toast } = useToast()
   const [readings, setReadings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     client.get('/reading')
       .then(r => setReadings(r.data || []))
-      .catch(() => {})
+      .catch(() => {
+        setLoadError(true)
+        toast.error('Failed to load reading list')
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -39,7 +45,14 @@ export default function ReadingList() {
         </div>
       </motion.div>
 
-      {readings.length > 0 ? (
+      {loadError ? (
+        <div className="card p-12 text-center">
+          <FiFileText className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-tertiary)' }} />
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            Failed to load reading list. Please try again.
+          </p>
+        </div>
+      ) : readings.length > 0 ? (
         <div className="space-y-3">
           {readings.map((item, i) => (
             <motion.div

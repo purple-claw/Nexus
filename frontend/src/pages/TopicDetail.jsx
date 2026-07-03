@@ -259,9 +259,10 @@ export default function TopicDetail() {
 
   const handleMCQAnswer = async (mcqId, isCorrect) => {
     try {
-      await client.post(`/mcqs/${mcqId}/answer`, { is_correct: isCorrect })
+      const { data } = await client.post(`/mcqs/${mcqId}/answer`, { is_correct: isCorrect })
+      return data
     } catch {
-      // silent
+      toast.error('Failed to record answer')
     }
   }
 

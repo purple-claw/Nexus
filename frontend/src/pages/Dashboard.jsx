@@ -8,6 +8,7 @@ import {
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import { PageSkeleton } from '../components/LoadingSpinner'
+import { useToast } from '../context/ToastContext'
 
 const statCards = [
   { key: 'topic_count', icon: FiBook, label: 'Topics', color: 'from-sky-400 to-blue-600', link: '/library' },
@@ -30,6 +31,7 @@ const item = {
 }
 
 export default function Dashboard() {
+  const { toast } = useToast()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -39,7 +41,7 @@ export default function Dashboard() {
         const { data: res } = await client.get('/dashboard')
         setData(res)
       } catch (err) {
-        console.error('Failed to load dashboard', err)
+        toast.error('Failed to load dashboard')
       } finally {
         setLoading(false)
       }

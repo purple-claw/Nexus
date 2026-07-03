@@ -1,12 +1,18 @@
 const jwt = require('jsonwebtoken')
 const config = require('../config.js')
 
+const tokenBlacklist = new Set()
+
 function generateToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, email: user.email },
     config.jwtSecret,
     { expiresIn: '7d' }
   )
+}
+
+function invalidateToken(token) {
+  tokenBlacklist.add(token)
 }
 
 function authMiddleware(req, res, next) {
@@ -16,6 +22,9 @@ function authMiddleware(req, res, next) {
   }
   try {
     const token = header.split(' ')[1]
+    if (tokenBlacklist.has(token)) {
+      return res.status(401).json({ error: 'Token has been invalidated' })
+    }
     req.user = jwt.verify(token, config.jwtSecret)
     next()
   } catch {
@@ -23,4 +32,4 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { generateToken, authMiddleware }
+module.exports = { generateToken, authMiddleware, invalidateToken, tokenBlacklist }

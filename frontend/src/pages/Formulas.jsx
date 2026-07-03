@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { FiChevronDown } from 'react-icons/fi'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import LoadingSpinner from '../components/LoadingSpinner'
 import client from '../api/client'
+import { useToast } from '../context/ToastContext'
 
 export default function Formulas() {
+  const { toast } = useToast()
   const [formulas, setFormulas] = useState([])
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
 
   useEffect(() => {
     setLoading(true)
     client.get('/reading/formulas')
       .then(r => setFormulas(r.data))
-      .catch(() => {})
+      .catch(() => toast.error('Failed to load formulas'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -24,15 +26,10 @@ export default function Formulas() {
 
   const handleCopy = (content) => {
     navigator.clipboard.writeText(content)
+    toast.success('Copied to clipboard')
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
-      </div>
-    )
-  }
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -58,11 +55,9 @@ export default function Formulas() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: index * 0.05 }}
-                className="rounded-2xl overflow-hidden"
+                className="card overflow-hidden"
                 style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  boxShadow: expandedId === formula.id ? '0 0 30px rgba(59, 130, 246, 0.15)' : 'var(--shadow-sm)',
+                  boxShadow: expandedId === formula.id ? '0 0 30px rgba(59, 130, 246, 0.15)' : undefined,
                 }}
               >
                 <button
@@ -83,9 +78,7 @@ export default function Formulas() {
                     animate={{ rotate: expandedId === formula.id ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <svg className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <FiChevronDown className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                   </motion.div>
                 </button>
                 <AnimatePresence>

@@ -29,7 +29,7 @@ export default function CalendarPage() {
       setEvents(eventsRes.data)
       setAvailableTopics(topicsRes.data.topics || [])
     } catch (err) {
-      console.error('Failed to load calendar', err)
+      toast.error('Failed to load calendar')
     } finally {
       setLoading(false)
     }

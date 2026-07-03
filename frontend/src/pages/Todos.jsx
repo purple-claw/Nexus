@@ -109,7 +109,7 @@ export default function Todos() {
       }, []) || []
       setTodos(all)
     } catch {
-      console.error('Failed to load todos')
+      toast.error('Failed to load todos')
     } finally {
       setLoading(false)
     }

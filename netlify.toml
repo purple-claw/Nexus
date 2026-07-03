@@ -1,14 +1,13 @@
 [build]
-  command = "pip install -r requirements.txt"
-  functions = "functions"
-  publish = "."
+  command = "cd frontend && npm ci && npm run build"
+  publish = "frontend/dist"
 
 [[redirects]]
-  from = "/static/*"
-  to = "/static/*"
+  from = "/api/*"
+  to = "https://nexus-api-abcdef.a.run.app/api/:splat"
   status = 200
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/wsgi_handler"
+  to = "/index.html"
   status = 200

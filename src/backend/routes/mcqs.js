@@ -33,7 +33,6 @@ router.get('/mcqs', authMiddleware, async (req, res) => {
         topic_title: t.title,
         question: m.question,
         options: parseOptions(m.options || '[]'),
-        answer: m.answer,
         explanation: m.explanation || '',
         difficulty: m.difficulty || 'medium',
         attempts: p ? p.attempts || 0 : 0,
@@ -45,9 +44,10 @@ router.get('/mcqs', authMiddleware, async (req, res) => {
 })
 
 router.post('/mcqs/:mcqId/answer', authMiddleware, async (req, res) => {
-  const mcqId = parseInt(req.params.mcqId)
+  const mcqId = parseInt(req.params.mcqId, 10)
+  if (isNaN(mcqId)) return res.status(400).json({ error: 'Invalid MCQ ID' })
   const { is_correct } = req.body
-  const correct = !!is_correct
+  if (typeof is_correct !== 'boolean') return res.status(400).json({ error: 'is_correct must be a boolean' })
 
   const mcq = db.get('mcqs', mcqId)
   if (!mcq) return res.status(404).json({ error: 'Question not found' })
@@ -58,18 +58,18 @@ router.post('/mcqs/:mcqId/answer', authMiddleware, async (req, res) => {
   if (existing) {
     await db.update('progress', existing.id, {
       attempts: (existing.attempts || 0) + 1,
-      correct_count: (existing.correct_count || 0) + (correct ? 1 : 0),
+      correct_count: (existing.correct_count || 0) + (is_correct ? 1 : 0),
     })
   } else {
     await db.insert('progress', {
       user_id: req.user.id,
       mcq_id: mcqId,
       attempts: 1,
-      correct_count: correct ? 1 : 0,
+      correct_count: is_correct ? 1 : 0,
     })
   }
 
-  res.json({ success: true })
+  res.json({ success: true, correct: is_correct, correctAnswer: mcq.answer })
 })
 
 module.exports = router

@@ -1,3 +1,4 @@
+require('express-async-errors')
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
@@ -33,6 +34,13 @@ app.use(async (req, res, next) => {
     }
   }
   next()
+})
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err.message, err.stack)
+})
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message, err.stack)
 })
 
 app.use('/api', authRoutes)

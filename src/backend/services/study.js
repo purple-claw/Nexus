@@ -57,6 +57,7 @@ async function dashboardSummary(db, userId, today) {
     for (const m of db.find('mcqs', { topic_id: tid })) {
       const mCopy = { ...m }
       mCopy.options = parseOptions(m.options || '[]')
+      delete mCopy.answer
       mcqs.push(mCopy)
     }
     for (const td of db.find('todos', { topic_id: tid })) todos.push(td)
@@ -202,6 +203,7 @@ async function dailyPlan(db, userId, planDate) {
     for (const m of db.find('mcqs', { topic_id: tid })) {
       const mCopy = { ...m }
       mCopy.options = parseOptions(m.options || '[]')
+      delete mCopy.answer
       result.mcqs.push(mCopy)
     }
     for (const td of db.find('todos', { topic_id: tid })) result.todos.push(td)
@@ -222,7 +224,6 @@ async function listMcqs(db, userId) {
         topic_title: t.title,
         question: m.question,
         options: parseOptions(m.options || '[]'),
-        answer: m.answer,
         explanation: m.explanation || '',
         difficulty: m.difficulty || 'medium',
         attempts: p ? p.attempts || 0 : 0,
