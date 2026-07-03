@@ -42,9 +42,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     >
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 h-16 shrink-0 ${collapsed ? 'justify-center' : ''}`}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">N</span>
-        </div>
+        <img src="/icon.svg" alt="Nexus" className="w-8 h-8 shrink-0" />
         {!collapsed && (
           <motion.span
             initial={{ opacity: 0 }}

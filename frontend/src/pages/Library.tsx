@@ -72,13 +72,13 @@ function TopicCard({ topic, onDateChange, onClearDate, onEdit: _onEdit, onDelete
             <span className="flex items-center gap-1"><FiList className="w-3 h-3" /> {topic.note_count}</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="date"
               value={dateInputs[topic.id] || ''}
               onChange={(e) => onDateChange(topic.id, e.target.value)}
               min={today}
-              className="px-2 py-1 text-xs rounded-lg border outline-none"
+              className="px-2 py-1 text-xs rounded-lg border outline-none w-full max-w-[160px]"
               style={{
                 background: 'var(--bg-elevated)',
                 color: topic.plan_date ? 'var(--accent)' : 'var(--text-tertiary)',

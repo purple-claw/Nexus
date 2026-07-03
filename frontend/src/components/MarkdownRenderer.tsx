@@ -7,6 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import { FiCopy, FiCheck, FiCode, FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import MermaidDiagram from './MermaidDiagram'
 
 const LARGE_CODE_LINES = 400
 const CODE_PREVIEW_LINES = 50
@@ -145,6 +146,8 @@ const CodeBlock = memo(function CodeBlock({ language, value }: { language?: stri
   }, [value])
 
   if (MATH_LANGUAGES.has(normalizedLanguage)) return <MathBlock value={normalizeMathSource(value)} />
+
+  if (normalizedLanguage === 'mermaid') return <MermaidDiagram chart={value} />
 
   const displayLanguage = languageLabels[language?.toLowerCase()] ?? language?.toUpperCase() ?? ''
   const lines = value.split('\n')
