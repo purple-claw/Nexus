@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src --max-warnings 200",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --check 'src/**/*.{js,jsx}'",
+    "format:fix": "prettier --write 'src/**/*.{js,jsx}'",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -22,10 +28,21 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "happy-dom": "^20.10.6",
+    "jsdom": "^29.1.1",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "vite": "^5.0.0"
+    "typescript": "^6.0.3",
+    "vite": "^5.0.0",
+    "vitest": "^4.1.9"
   }
 }

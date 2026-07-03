@@ -1,0 +1,278 @@
+interface ParsedMetadata {
+  title: string
+  category: string
+  subcategory: string | null
+  description: string
+}
+
+interface ReadingBlock {
+  title: string
+  content: string
+  order_idx: number
+}
+
+interface Formula {
+  title: string
+  content: string
+  order_idx: number
+}
+
+interface Mcq {
+  question: string
+  options: string
+  answer: string
+  explanation: string
+  difficulty: string
+  order_idx: number
+}
+
+interface Note {
+  content: string
+  order_idx: number
+}
+
+interface Todo {
+  content: string
+  is_completed: number
+  order_idx: number
+}
+
+interface ParsedResult {
+  metadata: ParsedMetadata
+  reading: ReadingBlock[]
+  formulas: Formula[]
+  mcqs: Mcq[]
+  notes: Note[]
+  todos: Todo[]
+}
+
+interface DbLike {
+  findOne(table: string, filters: Record<string, any>): any
+  insert(table: string, record: any): Promise<number>
+}
+
+function clean(value: any, fallback: string | null = ''): string {
+  if (value == null) return fallback ?? ''
+  const s = String(value).trim()
+  return (s || fallback) ?? ''
+}
+
+function parseMarkdown(content: string): ParsedResult {
+  const result: ParsedResult = {
+    metadata: { title: 'Untitled', category: 'General', subcategory: null, description: '' },
+    reading: [],
+    formulas: [],
+    mcqs: [],
+    notes: [],
+    todos: [],
+  }
+
+  const lines = content.split('\n')
+  let orderIdx = 0
+  let inCodeBlock = false
+  let currentH2: string | null = null
+  const sections: Record<string, string> = {}
+  let sectionBuffer: string[] = []
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      inCodeBlock = !inCodeBlock
+      sectionBuffer.push(line)
+      continue
+    }
+    if (line.startsWith('# ') && !inCodeBlock) {
+      const title = clean(line.slice(2))
+      if (title) result.metadata.title = title
+      sectionBuffer.push(line)
+      continue
+    }
+    if (line.startsWith('## ') && !inCodeBlock) {
+      if (currentH2 && sectionBuffer.length > 0) {
+        sections[currentH2] = sectionBuffer.join('\n').trim()
+      }
+      currentH2 = clean(line.slice(3)).toLowerCase().replace(/\s+/g, '_')
+      sectionBuffer = []
+    } else {
+      sectionBuffer.push(line)
+    }
+  }
+  if (currentH2 && sectionBuffer.length > 0) {
+    sections[currentH2] = sectionBuffer.join('\n').trim()
+  }
+
+  const metaText = sections.metadata || ''
+  for (const line of metaText.split('\n')) {
+    const trimmed = line.trim()
+    const lower = trimmed.toLowerCase()
+    if (lower.startsWith('- category:')) {
+      result.metadata.category = clean(trimmed.split(':')[1], 'General')
+    } else if (lower.startsWith('- subcategory:')) {
+      const val = clean(trimmed.split(':')[1])
+      result.metadata.subcategory = val || null
+    } else if (lower.startsWith('- description:')) {
+      result.metadata.description = clean(trimmed.split(':')[1])
+    }
+  }
+
+  let readingKey: string | null = null
+  for (const key of ['content', 'reading'] as const) {
+    if (sections[key]) { readingKey = key; break }
+  }
+
+  if (readingKey) {
+    const readingText = sections[readingKey]
+    const readingSections = readingText.split(/\n(?=### )/)
+    for (const sec of readingSections) {
+      const trimmed = sec.trim()
+      if (!trimmed) continue
+      let title = ''
+      const contentLines: string[] = []
+      for (const line of trimmed.split('\n')) {
+        if (line.startsWith('### ')) {
+          title = clean(line.slice(4))
+        } else {
+          contentLines.push(line)
+        }
+      }
+      const body = contentLines.join('\n').trim()
+      if (body) {
+        result.reading.push({ title: title || 'Section', content: body, order_idx: orderIdx })
+        orderIdx++
+      }
+    }
+  }
+
+  const formulasText = sections.formulas || ''
+  if (formulasText) {
+    for (const line of formulasText.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      const m = trimmed.match(/\*\*(.+?):\*\*\s*(.+)/)
+      if (m) {
+        const title = clean(m[1])
+        const content = clean(m[2])
+        if (title && content) {
+          result.formulas.push({ title, content, order_idx: orderIdx })
+          orderIdx++
+        }
+      }
+    }
+  }
+
+  const mcqsText = sections.mcqs || ''
+  if (mcqsText) {
+    if (mcqsText.length > 50000) {
+      console.warn('MCQ section too large, skipping parse')
+    } else {
+      const mcqBlocks = mcqsText.split(/\n(?=\*\*Q\d+:)/)
+      for (const block of mcqBlocks) {
+        if (block.length > 10000) continue
+        const b = block.trim()
+        if (!b) continue
+        const qIdx = b.indexOf('**Q')
+        const optionsIdx = b.indexOf('\n- ')
+        if (qIdx === -1 || optionsIdx === -1 || optionsIdx <= qIdx) continue
+        const question = clean(b.slice(b.indexOf('**:') + 3, optionsIdx).trim())
+
+        const options: { key: string; text: string }[] = []
+        const optLines = b.split('\n')
+        for (const line of optLines) {
+          const optMatch = line.match(/^\s*-\s*([A-Da-d])\)\s+(.+)/)
+          if (optMatch) {
+            options.push({ key: optMatch[1].toUpperCase(), text: clean(optMatch[2]) })
+            if (options.length >= 8) break
+          }
+        }
+
+        const answerM = b.match(/\*\*Answer:\*\*\s*([A-D])/)
+        const answer = answerM ? clean(answerM[1]).toUpperCase() : ''
+
+        const difficultyM = b.match(/\*\*Difficulty:\*\*\s*(.{1,50})/)
+        const difficulty = difficultyM ? clean(difficultyM[1], 'medium').toLowerCase() : 'medium'
+
+        const explIdx = b.indexOf('**Explanation:**')
+        const explanation = explIdx !== -1 ? clean(b.slice(explIdx + 16).trim(), '') : ''
+
+        if (options.length > 0 && answer) {
+          result.mcqs.push({
+            question,
+            options: JSON.stringify(options),
+            answer,
+            explanation,
+            difficulty,
+            order_idx: orderIdx,
+          })
+          orderIdx++
+        }
+      }
+    }
+  }
+
+  const notesText = sections.notes || ''
+  if (notesText) {
+    for (const line of notesText.split('\n')) {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('- ')) {
+        const note = clean(trimmed.slice(2))
+        if (note) {
+          result.notes.push({ content: note, order_idx: orderIdx })
+          orderIdx++
+        }
+      }
+    }
+  }
+
+  const todosText = sections.todos || ''
+  if (todosText) {
+    for (const line of todosText.split('\n')) {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('- [ ]')) {
+        const todo = clean(trimmed.slice(5))
+        if (todo) {
+          result.todos.push({ content: todo, is_completed: 0, order_idx: orderIdx })
+          orderIdx++
+        }
+      } else if (trimmed.startsWith('- [x]')) {
+        const todo = clean(trimmed.slice(5))
+        if (todo) {
+          result.todos.push({ content: todo, is_completed: 1, order_idx: orderIdx })
+          orderIdx++
+        }
+      } else if (trimmed.startsWith('- ')) {
+        const todo = clean(trimmed.slice(2))
+        if (todo) {
+          result.todos.push({ content: todo, is_completed: 0, order_idx: orderIdx })
+          orderIdx++
+        }
+      }
+    }
+  }
+
+  return result
+}
+
+async function getOrCreateCategory(db: DbLike, name: string, parentName: string | number | null = null, userId: number | null = null): Promise<number> {
+  const catName = clean(name, 'General')
+  let parentId: number | null = null
+
+  if (typeof parentName === 'number') {
+    parentId = parentName
+  } else if (parentName) {
+    const pName = clean(parentName, null)
+    if (pName) {
+      const parent = db.findOne('categories', { name: pName, parent_id: null, user_id: userId })
+      if (parent) {
+        parentId = parent.id
+      } else {
+        parentId = await db.insert('categories', { name: pName, parent_id: null, user_id: userId })
+      }
+    }
+  }
+
+  const category = db.findOne('categories', { name: catName, parent_id: parentId, user_id: userId })
+  if (category) return category.id
+  return db.insert('categories', { name: catName, parent_id: parentId, user_id: userId })
+}
+
+export { parseMarkdown, getOrCreateCategory }
+export type { ParsedResult, ParsedMetadata, ReadingBlock, Formula, Mcq, Note, Todo, DbLike }

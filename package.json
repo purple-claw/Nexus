@@ -1,5 +1,16 @@
 {
   "private": true,
+  "main": "dist/api/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/api/index.js",
+    "lint": "eslint 'src/backend/**/*.ts' 'api/**/*.ts' --max-warnings 200",
+    "lint:fix": "eslint 'src/backend/**/*.ts' 'api/**/*.ts' --fix",
+    "format": "prettier --check 'src/backend/**/*.ts' 'api/**/*.ts'",
+    "format:fix": "prettier --write 'src/backend/**/*.ts' 'api/**/*.ts'",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -11,6 +22,26 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.1.0",
+    "@types/pg": "^8.20.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }

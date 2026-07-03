@@ -1,0 +1,446 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Nexus API",
+    "version": "2.0.0",
+    "description": "REST API for the Nexus learning platform — manage topics, reading, MCQs, notes, formulas, todos, and daily study plans."
+  },
+  "servers": [
+    { "url": "/", "description": "Current deployment" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "Topic": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "category_id": { "type": "integer" },
+          "document_id": { "type": ["integer", "null"] },
+          "user_id": { "type": "integer" }
+        }
+      },
+      "MCQ": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "question": { "type": "string" },
+          "options": { "type": "string", "description": "JSON-encoded array of {key, text}" },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] }
+        }
+      },
+      "MCQWithAnswer": {
+        "allOf": [
+          { "$ref": "#/components/schemas/MCQ" },
+          { "type": "object", "properties": { "answer": { "type": "string" } } }
+        ]
+      },
+      "DailyPlan": {
+        "type": "object",
+        "properties": {
+          "plan_date": { "type": "string", "format": "date" },
+          "topic_id": { "type": "integer" },
+          "title": { "type": "string" }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "properties": {
+          "stats": {
+            "type": "object",
+            "properties": {
+              "topic_count": { "type": "integer" },
+              "reading_count": { "type": "integer" },
+              "mcq_count": { "type": "integer" },
+              "pending_todos": { "type": "integer" }
+            }
+          },
+          "topics": { "type": "array", "items": { "$ref": "#/components/schemas/Topic" } },
+          "reading": { "type": "array", "items": { "type": "object" } },
+          "mcqs": { "type": "array", "items": { "$ref": "#/components/schemas/MCQ" } },
+          "todos": { "type": "array", "items": { "type": "object" } }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password"],
+                "properties": {
+                  "username": { "type": "string", "minLength": 3 },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User created, returns JWT token" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful login, returns JWT" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout (invalidates JWT)",
+        "responses": {
+          "200": { "description": "Logged out" }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Dashboard summary with stats, recent topics, reading, MCQs, todos",
+        "responses": {
+          "200": {
+            "description": "Dashboard data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DashboardSummary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/topics": {
+      "get": {
+        "tags": ["Topics"],
+        "summary": "List all topics for the authenticated user",
+        "responses": {
+          "200": { "description": "Array of topics" }
+        }
+      },
+      "post": {
+        "tags": ["Topics"],
+        "summary": "Create a new topic",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "category_id": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Topic created" }
+        }
+      }
+    },
+    "/topics/{id}": {
+      "get": {
+        "tags": ["Topics"],
+        "summary": "Get topic detail with formulas, code snippets, MCQs, notes, and TODO items",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Topic detail" },
+          "404": { "description": "Topic not found" }
+        }
+      },
+      "put": {
+        "tags": ["Topics"],
+        "summary": "Update topic title",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "title": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Topics"],
+        "summary": "Delete topic and associated data",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted" }
+        }
+      }
+    },
+    "/topics/tracker": {
+      "get": {
+        "tags": ["Topics"],
+        "summary": "Get topic tracker — daily plan counts per topic",
+        "responses": {
+          "200": { "description": "Tracker data" }
+        }
+      }
+    },
+    "/reading": {
+      "get": {
+        "tags": ["Reading"],
+        "summary": "Get all reading blocks grouped by topic",
+        "responses": {
+          "200": { "description": "Array of { topic, topic_id, reading } groups" }
+        }
+      }
+    },
+    "/reading/formulas": {
+      "get": {
+        "tags": ["Reading"],
+        "summary": "Get all formulas grouped by topic",
+        "responses": {
+          "200": { "description": "Array of formula groups" }
+        }
+      }
+    },
+    "/reading/notes": {
+      "get": {
+        "tags": ["Reading"],
+        "summary": "Get all notes grouped by topic",
+        "responses": {
+          "200": { "description": "Array of note groups" }
+        }
+      }
+    },
+    "/reading/code": {
+      "get": {
+        "tags": ["Reading"],
+        "summary": "Get all code snippets grouped by topic",
+        "responses": {
+          "200": { "description": "Array of code snippets" }
+        }
+      }
+    },
+    "/reading/{id}": {
+      "get": {
+        "tags": ["Reading"],
+        "summary": "Get a single reading block by ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Reading block" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/mcqs": {
+      "get": {
+        "tags": ["MCQs"],
+        "summary": "List all MCQs (answers stripped)",
+        "responses": {
+          "200": { "description": "MCQ list" }
+        }
+      }
+    },
+    "/mcqs/today": {
+      "get": {
+        "tags": ["MCQs"],
+        "summary": "Get MCQs for today's planned topics (answers stripped)",
+        "responses": {
+          "200": { "description": "MCQ list for today" }
+        }
+      }
+    },
+    "/mcqs/answer": {
+      "post": {
+        "tags": ["MCQs"],
+        "summary": "Submit an answer and get the correct answer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["mcq_id", "answer"],
+                "properties": {
+                  "mcq_id": { "type": "integer" },
+                  "answer": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Returns correct answer and whether user was right" },
+          "404": { "description": "MCQ not found" }
+        }
+      }
+    },
+    "/mcqs/practice": {
+      "get": {
+        "tags": ["MCQs"],
+        "summary": "Get practice MCQs (randomized, answers stripped)",
+        "responses": {
+          "200": { "description": "Random MCQ selection" }
+        }
+      }
+    },
+    "/todos": {
+      "get": {
+        "tags": ["Todos"],
+        "summary": "Get todos grouped by topic",
+        "responses": {
+          "200": { "description": "Array of { topic, topic_id, todos } groups" }
+        }
+      }
+    },
+    "/todos/toggle/{id}": {
+      "post": {
+        "tags": ["Todos"],
+        "summary": "Toggle todo completion status",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Returns { success, is_completed }" }
+        }
+      }
+    },
+    "/calendar/events": {
+      "get": {
+        "tags": ["Calendar"],
+        "summary": "Get calendar events (daily plan counts per date)",
+        "responses": {
+          "200": { "description": "Object mapping date strings to { topics }" }
+        }
+      }
+    },
+    "/calendar/available": {
+      "get": {
+        "tags": ["Calendar"],
+        "summary": "Get topics available for assignment",
+        "responses": {
+          "200": { "description": "{ topics: [...] }" }
+        }
+      }
+    },
+    "/calendar/assign": {
+      "post": {
+        "tags": ["Calendar"],
+        "summary": "Assign a topic to a date in the daily plan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["topic_id", "date"],
+                "properties": {
+                  "topic_id": { "type": "integer" },
+                  "date": { "type": "string", "format": "date", "description": "YYYY-MM-DD, must not be in the past" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Assigned" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/daily/{dateStr}": {
+      "get": {
+        "tags": ["Daily Plan"],
+        "summary": "Get daily plan for a specific date",
+        "parameters": [
+          { "name": "dateStr", "in": "path", "required": true, "schema": { "type": "string", "format": "date" }, "description": "YYYY-MM-DD" }
+        ],
+        "responses": {
+          "200": { "description": "Daily plan topics" },
+          "400": { "description": "Invalid date format" }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "tags": ["Upload"],
+        "summary": "Upload a markdown document. Accepts multipart file, JSON body, or raw text.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } } },
+            "application/json": { "schema": { "type": "object", "properties": { "content": { "type": "string" }, "md_content": { "type": "string" } } } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Document saved, returns { success, topic_id }" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/library": {
+      "get": {
+        "tags": ["Library"],
+        "summary": "Get library tree (categories with topics)",
+        "responses": {
+          "200": { "description": "Library tree structure" }
+        }
+      }
+    }
+  }
+}
