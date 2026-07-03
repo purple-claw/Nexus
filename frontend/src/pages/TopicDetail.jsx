@@ -1,37 +1,17 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft,
   FiTag, FiBarChart2, FiEdit2, FiCheck, FiX, FiTrash2,
-  FiCopy, FiCheckCircle, FiBookOpen, FiChevronDown, FiChevronUp,
+  FiBookOpen, FiChevronDown, FiChevronUp,
 } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import MCQQuestion from '../components/MCQQuestion'
+import CopyButton from '../components/CopyButton'
 import { useToast } from '../context/ToastContext'
 import LoadingSpinner from '../components/LoadingSpinner'
-
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false)
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [text])
-  return (
-    <button
-      onClick={handleCopy}
-      className="p-1.5 rounded-lg transition-all duration-200"
-      style={{ color: copied ? '#22c55e' : 'var(--text-tertiary)' }}
-      onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = 'var(--accent)' }}
-      onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = 'var(--text-tertiary)' }}
-      title={copied ? 'Copied!' : 'Copy'}
-    >
-      {copied ? <FiCheckCircle className="w-3.5 h-3.5" /> : <FiCopy className="w-3.5 h-3.5" />}
-    </button>
-  )
-}
 
 function ReadingBlockCard({ block, index }) {
   return (
@@ -280,7 +260,6 @@ export default function TopicDetail() {
   const { topic, readings, questions, formulas, notes } = data
   const reading_blocks = readings || []
   const mcqs = questions || []
-  const todos = []
 
   const sections = [
     { id: 'reading', label: 'Reading', icon: FiFileText, count: reading_blocks.length },
@@ -448,7 +427,7 @@ export default function TopicDetail() {
             >
               <AnimatePresence mode="popLayout">
                 {formulas.map((formula, i) => (
-                  <FormulaCard key={formula.id || i} formula={formula} index={i} />
+                  <FormulaCard key={formula.id} formula={formula} index={i} />
                 ))}
               </AnimatePresence>
             </motion.div>
@@ -462,7 +441,7 @@ export default function TopicDetail() {
               className="space-y-3"
             >
               {notes.map((note, i) => (
-                <NoteCard key={note.id || i} note={note} index={i} />
+                <NoteCard key={note.id} note={note} index={i} />
               ))}
             </motion.div>
           )}

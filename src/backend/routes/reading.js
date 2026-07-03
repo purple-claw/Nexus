@@ -4,26 +4,45 @@ const { authMiddleware  } = require('../middleware/auth.js')
 
 const router = Router()
 
-function getTopicIdsForToday(userId) {
+function getTopicIdsAndTitles(userId) {
   const today = new Date().toISOString().slice(0, 10)
   const plans = db.find('daily_plans', { user_id: userId, plan_date: today })
+  let topicIds
   if (plans.length === 0) {
     const allTopics = db.find('topics', { user_id: userId })
-    return allTopics.map(t => t.id)
+    topicIds = allTopics.map(t => t.id)
+  } else {
+    topicIds = plans.map(p => p.topic_id).filter(Boolean)
   }
-  return plans.map(p => p.topic_id).filter(Boolean)
+  const topicTitles = {}
+  for (const tid of topicIds) {
+    const t = db.get('topics', tid)
+    if (t) topicTitles[tid] = t.title
+  }
+  return { topicIds, topicTitles }
+}
+
+function groupByTopicId(records) {
+  const map = {}
+  for (const r of records) {
+    if (!map[r.topic_id]) map[r.topic_id] = []
+    map[r.topic_id].push(r)
+  }
+  return map
 }
 
 router.get('/reading', authMiddleware, async (req, res) => {
-  const topicIds = getTopicIdsForToday(req.user.id)
+  const { topicIds, topicTitles } = getTopicIdsAndTitles(req.user.id)
+  const blocksByTopic = groupByTopicId(db.find('reading_blocks'))
   const result = []
   for (const tid of topicIds) {
-    for (const rb of db.find('reading_blocks', { topic_id: tid })) {
-      const topic = db.get('topics', tid)
+    const blocks = blocksByTopic[tid] || []
+    const topicTitle = topicTitles[tid] || ''
+    for (const rb of blocks) {
       result.push({
         id: rb.id,
         title: rb.title || '',
-        topic_title: topic ? topic.title : '',
+        topic_title: topicTitle,
         content: rb.content || '',
         topic_id: tid,
       })
@@ -34,16 +53,18 @@ router.get('/reading', authMiddleware, async (req, res) => {
 })
 
 router.get('/reading/formulas', authMiddleware, async (req, res) => {
-  const topicIds = getTopicIdsForToday(req.user.id)
+  const { topicIds, topicTitles } = getTopicIdsAndTitles(req.user.id)
+  const formulasByTopic = groupByTopicId(db.find('formulas'))
   const result = []
   for (const tid of topicIds) {
-    const topic = db.get('topics', tid)
-    for (const f of db.find('formulas', { topic_id: tid })) {
+    const formulas = formulasByTopic[tid] || []
+    const topicTitle = topicTitles[tid] || ''
+    for (const f of formulas) {
       result.push({
         id: f.id,
         title: f.title || '',
         content: f.content || '',
-        topic_title: topic ? topic.title : '',
+        topic_title: topicTitle,
         topic_id: tid,
       })
     }
@@ -53,15 +74,17 @@ router.get('/reading/formulas', authMiddleware, async (req, res) => {
 })
 
 router.get('/reading/notes', authMiddleware, async (req, res) => {
-  const topicIds = getTopicIdsForToday(req.user.id)
+  const { topicIds, topicTitles } = getTopicIdsAndTitles(req.user.id)
+  const notesByTopic = groupByTopicId(db.find('notes'))
   const result = []
   for (const tid of topicIds) {
-    const topic = db.get('topics', tid)
-    for (const n of db.find('notes', { topic_id: tid })) {
+    const noteList = notesByTopic[tid] || []
+    const topicTitle = topicTitles[tid] || ''
+    for (const n of noteList) {
       result.push({
         id: n.id,
         content: n.content || '',
-        topic_title: topic ? topic.title : '',
+        topic_title: topicTitle,
         topic_id: tid,
       })
     }
@@ -71,13 +94,14 @@ router.get('/reading/notes', authMiddleware, async (req, res) => {
 })
 
 router.get('/reading/code', authMiddleware, async (req, res) => {
-  const topicIds = getTopicIdsForToday(req.user.id)
+  const { topicIds, topicTitles } = getTopicIdsAndTitles(req.user.id)
+  const blocksByTopic = groupByTopicId(db.find('reading_blocks'))
   const result = []
   const codeRegex = /```(\w+)\s*\n([\s\S]*?)```/g
   for (const tid of topicIds) {
-    const topic = db.get('topics', tid)
-    const readingBlocks = db.find('reading_blocks', { topic_id: tid })
-    for (const rb of readingBlocks) {
+    const blocks = blocksByTopic[tid] || []
+    const topicTitle = topicTitles[tid] || ''
+    for (const rb of blocks) {
       const content = rb.content || ''
       let match
       while ((match = codeRegex.exec(content)) !== null) {
@@ -89,7 +113,7 @@ router.get('/reading/code', authMiddleware, async (req, res) => {
             title: rb.title || '',
             language,
             content: code,
-            topic_title: topic ? topic.title : '',
+            topic_title: topicTitle,
             topic_id: tid,
           })
         }

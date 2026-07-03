@@ -20,20 +20,19 @@ async function dashboardSummary(db, userId, today) {
   }
 
   const topics = []
-  if (plans.length > 0) {
-    for (const plan of plans) {
-      const t = db.get('topics', plan.topic_id)
-      if (t) {
-        const cat = db.get('categories', t.category_id)
-        topics.push({
-          id: t.id,
-          title: t.title,
-          description: t.description || '',
-          category_name: cat ? cat.name : '',
-        })
-      }
+  for (const plan of plans) {
+    const t = db.get('topics', plan.topic_id)
+    if (t) {
+      const cat = db.get('categories', t.category_id)
+      topics.push({
+        id: t.id,
+        title: t.title,
+        description: t.description || '',
+        category_name: cat ? cat.name : '',
+      })
     }
-  } else {
+  }
+  if (topics.length === 0) {
     for (const tid of topicIds) {
       const t = db.get('topics', tid)
       if (t) {
@@ -52,23 +51,38 @@ async function dashboardSummary(db, userId, today) {
   const mcqs = []
   const todos = []
 
-  for (const tid of topicIds) {
-    for (const r of db.find('reading_blocks', { topic_id: tid })) reading.push(r)
-    for (const m of db.find('mcqs', { topic_id: tid })) {
+  const topicSet = new Set(topicIds)
+  const allReadingBlocks = db.find('reading_blocks')
+  const allMcqs = db.find('mcqs')
+  const allTodos = db.find('todos')
+
+  for (const r of allReadingBlocks) {
+    if (topicSet.has(r.topic_id)) reading.push(r)
+  }
+  for (const m of allMcqs) {
+    if (topicSet.has(m.topic_id)) {
       const mCopy = { ...m }
       mCopy.options = parseOptions(m.options || '[]')
       delete mCopy.answer
       mcqs.push(mCopy)
     }
-    for (const td of db.find('todos', { topic_id: tid })) todos.push(td)
+  }
+  for (const td of allTodos) {
+    if (topicSet.has(td.topic_id)) todos.push(td)
   }
 
   const pendingTodos = todos.filter(t => !t.is_completed).length
 
+  const progressRecords = db.find('progress', { user_id: userId })
+  const progressByMcq = {}
+  for (const p of progressRecords) {
+    progressByMcq[p.mcq_id] = p
+  }
+
   let mcqAttempts = 0
   let mcqCorrect = 0
   for (const m of mcqs) {
-    const p = db.findOne('progress', { user_id: userId, mcq_id: m.id })
+    const p = progressByMcq[m.id]
     if (p) {
       mcqAttempts += p.attempts || 0
       mcqCorrect += p.correct_count || 0
@@ -77,9 +91,13 @@ async function dashboardSummary(db, userId, today) {
   const accuracy = mcqAttempts > 0 ? Math.round((mcqCorrect / mcqAttempts) * 100) : null
 
   const userTopicIds = new Set(db.find('topics', { user_id: userId }).map(t => t.id))
-  const totalReading = db.find('reading_blocks').filter(r => userTopicIds.has(r.topic_id)).length
-  const totalMcqs = db.find('mcqs').filter(m => userTopicIds.has(m.topic_id)).length
-  const totalTodos = pendingTodos || db.find('todos').filter(td => userTopicIds.has(td.topic_id) && !td.is_completed).length
+  let totalReading = 0
+  let totalMcqs = 0
+  let totalTodos = 0
+  for (const r of allReadingBlocks) { if (userTopicIds.has(r.topic_id)) totalReading++ }
+  for (const m of allMcqs) { if (userTopicIds.has(m.topic_id)) totalMcqs++ }
+  for (const td of allTodos) { if (userTopicIds.has(td.topic_id) && !td.is_completed) totalTodos++ }
+  totalTodos = totalTodos || pendingTodos
 
   const stats = {
     topic_count: userTopicIds.size,
@@ -139,9 +157,14 @@ async function libraryTree(db, userId) {
     }
   }
 
-  function rollup(cat) {
+  function rollup(cat, visited = new Set()) {
+    if (visited.has(cat.id)) {
+      console.error('Cycle detected in category tree at category:', cat.name, 'id:', cat.id)
+      return 0
+    }
+    visited.add(cat.id)
     let total = cat.topic_count
-    for (const child of cat.children) total += rollup(child)
+    for (const child of cat.children) total += rollup(child, visited)
     cat.total_topic_count = total
     return total
   }
@@ -195,41 +218,48 @@ async function dailyPlan(db, userId, planDate) {
 
   const topicIds = plans.map(p => p.topic_id)
   if (topicIds.length === 0) return result
+  const topicSet = new Set(topicIds)
 
-  for (const tid of topicIds) {
-    for (const r of db.find('reading_blocks', { topic_id: tid })) result.reading.push(r)
-    for (const f of db.find('formulas', { topic_id: tid })) result.formulas.push(f)
-    for (const n of db.find('notes', { topic_id: tid })) result.notes.push(n)
-    for (const m of db.find('mcqs', { topic_id: tid })) {
+  for (const r of db.find('reading_blocks')) { if (topicSet.has(r.topic_id)) result.reading.push(r) }
+  for (const f of db.find('formulas')) { if (topicSet.has(f.topic_id)) result.formulas.push(f) }
+  for (const n of db.find('notes')) { if (topicSet.has(n.topic_id)) result.notes.push(n) }
+  for (const m of db.find('mcqs')) {
+    if (topicSet.has(m.topic_id)) {
       const mCopy = { ...m }
       mCopy.options = parseOptions(m.options || '[]')
       delete mCopy.answer
       result.mcqs.push(mCopy)
     }
-    for (const td of db.find('todos', { topic_id: tid })) result.todos.push(td)
   }
+  for (const td of db.find('todos')) { if (topicSet.has(td.topic_id)) result.todos.push(td) }
 
   return result
 }
 
 async function listMcqs(db, userId) {
   const topics = db.find('topics', { user_id: userId })
-  const result = []
+  const topicTitles = {}
+  for (const t of topics) topicTitles[t.id] = t.title
 
-  for (const t of topics) {
-    for (const m of db.find('mcqs', { topic_id: t.id })) {
-      const p = db.findOne('progress', { user_id: userId, mcq_id: m.id })
-      result.push({
-        id: m.id,
-        topic_title: t.title,
-        question: m.question,
-        options: parseOptions(m.options || '[]'),
-        explanation: m.explanation || '',
-        difficulty: m.difficulty || 'medium',
-        attempts: p ? p.attempts || 0 : 0,
-        correct_count: p ? p.correct_count || 0 : 0,
-      })
-    }
+  const progressRecords = db.find('progress', { user_id: userId })
+  const progressByMcq = {}
+  for (const p of progressRecords) progressByMcq[p.mcq_id] = p
+
+  const result = []
+  const userTopicIds = new Set(topics.map(t => t.id))
+  for (const m of db.find('mcqs')) {
+    if (!userTopicIds.has(m.topic_id)) continue
+    const p = progressByMcq[m.id]
+    result.push({
+      id: m.id,
+      topic_title: topicTitles[m.topic_id] || '',
+      question: m.question,
+      options: parseOptions(m.options || '[]'),
+      explanation: m.explanation || '',
+      difficulty: m.difficulty || 'medium',
+      attempts: p ? p.attempts || 0 : 0,
+      correct_count: p ? p.correct_count || 0 : 0,
+    })
   }
 
   result.sort((a, b) => (a.topic_title || '').localeCompare(b.topic_title || '') || (a.id || 0) - (b.id || 0))

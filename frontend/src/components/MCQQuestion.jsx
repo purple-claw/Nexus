@@ -17,9 +17,11 @@ export default function MCQQuestion({ question, onAnswer, disabled, revealedAnsw
 
   if (!question) return null
 
-  const options = typeof question.options === 'string'
-    ? JSON.parse(question.options)
-    : question.options
+  let options = question.options || []
+  if (typeof options === 'string') {
+    try { options = JSON.parse(options) } catch { options = [] }
+  }
+  if (!Array.isArray(options)) options = []
 
   const diff = difficultyColors[question.difficulty] || difficultyColors.medium
   const correctAnswer = revealedAnswer || question.answer

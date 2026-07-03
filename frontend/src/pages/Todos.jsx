@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  FiList, FiTarget, FiCheckCircle, FiClock, FiRotateCcw,
+  FiList, FiTarget, FiCheckCircle, FiClock,
 } from 'react-icons/fi'
 import client from '../api/client'
 import { useToast } from '../context/ToastContext'

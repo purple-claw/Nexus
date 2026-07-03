@@ -12,14 +12,24 @@ router.get('/todos', authMiddleware, async (req, res) => {
     const allTopics = db.find('topics', { user_id: req.user.id })
     topicIds = allTopics.map(t => t.id)
   }
-  const groups = []
+  const topicTitles = {}
   for (const tid of topicIds) {
     const t = db.get('topics', tid)
-    if (!t) continue
-    const topicTodos = db.find('todos', { topic_id: t.id })
-    if (topicTodos.length > 0) {
+    if (t) topicTitles[tid] = t.title
+  }
+  const todosByTopic = {}
+  for (const todo of db.find('todos')) {
+    if (topicIds.includes(todo.topic_id)) {
+      if (!todosByTopic[todo.topic_id]) todosByTopic[todo.topic_id] = []
+      todosByTopic[todo.topic_id].push(todo)
+    }
+  }
+  const groups = []
+  for (const tid of topicIds) {
+    const topicTodos = todosByTopic[tid]
+    if (topicTodos && topicTodos.length > 0) {
       topicTodos.sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0))
-      groups.push({ topic: t.title, topic_id: t.id, todos: topicTodos })
+      groups.push({ topic: topicTitles[tid] || '', topic_id: tid, todos: topicTodos })
     }
   }
   res.json({ groups })

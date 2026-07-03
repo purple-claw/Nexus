@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiTarget, FiBook, FiFileText, FiHelpCircle, FiList, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiTarget, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 import LoadingSpinner from '../components/LoadingSpinner'

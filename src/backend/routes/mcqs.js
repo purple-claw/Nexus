@@ -22,24 +22,30 @@ router.get('/mcqs', authMiddleware, async (req, res) => {
     const allTopics = db.find('topics', { user_id: req.user.id })
     topicIds = allTopics.map(t => t.id)
   }
-  const result = []
+  const topicTitles = {}
   for (const tid of topicIds) {
     const t = db.get('topics', tid)
-    if (!t) continue
-    for (const m of db.find('mcqs', { topic_id: t.id })) {
-      const p = db.findOne('progress', { user_id: req.user.id, mcq_id: m.id })
-      result.push({
-        id: m.id,
-        topic_title: t.title,
-        question: m.question,
-        options: parseOptions(m.options || '[]'),
-        explanation: m.explanation || '',
-        difficulty: m.difficulty || 'medium',
-        attempts: p ? p.attempts || 0 : 0,
-        correct_count: p ? p.correct_count || 0 : 0,
-      })
-    }
+    if (t) topicTitles[tid] = t.title
   }
+  const allMcqs = topicIds.length > 0 ? db.find('mcqs').filter(m => topicIds.includes(m.topic_id)) : []
+  const progressRecords = db.find('progress', { user_id: req.user.id })
+  const progressByMcq = {}
+  for (const p of progressRecords) {
+    progressByMcq[p.mcq_id] = p
+  }
+  const result = allMcqs.map(m => {
+    const p = progressByMcq[m.id]
+    return {
+      id: m.id,
+      topic_title: topicTitles[m.topic_id] || '',
+      question: m.question,
+      options: parseOptions(m.options || '[]'),
+      explanation: m.explanation || '',
+      difficulty: m.difficulty || 'medium',
+      attempts: p ? p.attempts || 0 : 0,
+      correct_count: p ? p.correct_count || 0 : 0,
+    }
+  })
   res.json(result)
 })
 

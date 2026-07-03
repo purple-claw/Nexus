@@ -43,7 +43,7 @@ export default function CodeSnippets() {
 
       {snippets.length === 0 ? (
         <div className="text-center py-16 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-          <p style={{ color: 'var(--text-tertiary)' }}>No code snippets found for today's topics</p>
+          <p style={{ color: 'var(--text-tertiary)' }}>No code snippets found. Upload a document to get started.</p>
         </div>
       ) : (
         <div className="space-y-4">

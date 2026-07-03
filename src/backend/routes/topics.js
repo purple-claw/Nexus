@@ -3,6 +3,14 @@ const db = require('../db.js')
 const { authMiddleware  } = require('../middleware/auth.js')
 const { topicDetail  } = require('../services/study.js')
 
+function countByTopicId(records) {
+  const map = {}
+  for (const r of records) {
+    map[r.topic_id] = (map[r.topic_id] || 0) + 1
+  }
+  return map
+}
+
 const router = Router()
 
 router.get('/topics/tracker', authMiddleware, async (req, res) => {
@@ -16,6 +24,12 @@ router.get('/topics/tracker', authMiddleware, async (req, res) => {
     if (!planMap[tid] || p.plan_date > planMap[tid]) planMap[tid] = p.plan_date
   }
 
+  const readingCount = countByTopicId(db.find('reading_blocks'))
+  const mcqCount = countByTopicId(db.find('mcqs'))
+  const formulaCount = countByTopicId(db.find('formulas'))
+  const noteCount = countByTopicId(db.find('notes'))
+  const todoCount = countByTopicId(db.find('todos'))
+
   const result = topics.map(t => {
     const cat = db.get('categories', t.category_id)
     return {
@@ -23,11 +37,11 @@ router.get('/topics/tracker', authMiddleware, async (req, res) => {
       title: t.title,
       description: t.description || '',
       category_name: cat ? cat.name : '',
-      reading_count: db.count('reading_blocks', { topic_id: t.id }),
-      mcq_count: db.count('mcqs', { topic_id: t.id }),
-      formula_count: db.count('formulas', { topic_id: t.id }),
-      note_count: db.count('notes', { topic_id: t.id }),
-      todo_count: db.count('todos', { topic_id: t.id }),
+      reading_count: readingCount[t.id] || 0,
+      mcq_count: mcqCount[t.id] || 0,
+      formula_count: formulaCount[t.id] || 0,
+      note_count: noteCount[t.id] || 0,
+      todo_count: todoCount[t.id] || 0,
       plan_date: planMap[t.id] || null,
     }
   })

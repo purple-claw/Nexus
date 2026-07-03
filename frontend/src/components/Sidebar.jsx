@@ -1,10 +1,10 @@
-import { useState, useEffect, cloneElement } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  FiHome, FiBook, FiGrid, FiFileText, FiHelpCircle,
+  FiHome, FiBook, FiFileText, FiHelpCircle,
   FiUpload, FiCalendar, FiList, FiChevronLeft, FiChevronRight,
-  FiX, FiTarget, FiCode, FiBarChart2
+  FiTarget, FiCode, FiBarChart2
 } from 'react-icons/fi'
 import { useTheme } from '../context/ThemeContext'
 
@@ -20,10 +20,6 @@ const navItems = [
   { to: '/calendar', icon: FiCalendar, label: 'Calendar' },
   { to: '/daily', icon: FiTarget, label: 'Daily Plan' },
   { to: '/upload', icon: FiUpload, label: 'Upload' },
-]
-
-const bottomItems = [
-  { to: '/reading', icon: FiFileText, label: 'Docs' },
 ]
 
 export default function Sidebar({ mobileOpen, setMobileOpen }) {
@@ -153,7 +149,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
               className="absolute left-0 top-0 h-full w-64"
               onClick={(e) => e.stopPropagation()}
             >
-              {React.cloneElement(sidebarContent, null)}
+              {sidebarContent}
             </motion.aside>
           </motion.div>
         )}

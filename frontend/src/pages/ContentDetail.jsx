@@ -2,34 +2,12 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  FiChevronLeft, FiBarChart2, FiList, FiCopy, FiCheckCircle,
+  FiChevronLeft, FiBarChart2, FiList,
 } from 'react-icons/fi'
 import client from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import CopyButton from '../components/CopyButton'
 import LoadingSpinner from '../components/LoadingSpinner'
-
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false)
-  useEffect(() => {
-    if (copied) {
-      const t = setTimeout(() => setCopied(false), 2000)
-      return () => clearTimeout(t)
-    }
-  }, [copied])
-  return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(text).catch(() => {}); setCopied(true) }}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
-      style={{
-        background: copied ? 'rgba(34,197,94,0.15)' : 'var(--accent-light)',
-        color: copied ? '#22c55e' : 'var(--accent)',
-      }}
-    >
-      {copied ? <FiCheckCircle className="w-3.5 h-3.5" /> : <FiCopy className="w-3.5 h-3.5" />}
-      {copied ? 'Copied' : 'Copy'}
-    </button>
-  )
-}
 
 export default function ContentDetail() {
   const { type, id } = useParams()
@@ -40,6 +18,10 @@ export default function ContentDetail() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
+        if (type !== 'formula' && type !== 'note') {
+          setError(true)
+          return
+        }
         const endpoint = type === 'formula' ? `/reading/formula/${id}` : `/reading/note/${id}`
         const { data: res } = await client.get(endpoint)
         setData(res)
@@ -130,7 +112,7 @@ export default function ContentDetail() {
                       {data.title || 'Formula'}
                     </h2>
                   </div>
-                  <CopyButton text={data.content} />
+                  <CopyButton text={data.content} showLabel />
                 </div>
                 <div className="prose max-w-none text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   <MarkdownRenderer content={data.content} />
