@@ -10,7 +10,7 @@ let pgPool: pg.Pool | null = null
 if (config.databaseUrl) {
   pgPool = new pg.Pool({
     connectionString: config.databaseUrl,
-    ssl: config.databaseUrl.includes('localhost') ? false : { rejectUnauthorized: true },
+    ssl: config.databaseUrl.includes('localhost') ? false : { rejectUnauthorized: false },
     connectionTimeoutMillis: 10000,
   })
   pgPool.on('error', (err: Error) => {
